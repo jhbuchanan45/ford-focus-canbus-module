@@ -47,6 +47,8 @@ This project uses **[OpenSpec](https://github.com/Fission-AI/OpenSpec)** — all
 
 Specs live in [`openspec/specs/`](./openspec/specs/) and are the authoritative reference for what the firmware should do.
 
+See **[`docs/development-guide.md`](./docs/development-guide.md)** for the full workflow — small features, large features, and how to correct specs.
+
 ---
 
 ## 🔧 Hardware Target
