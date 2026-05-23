@@ -1,0 +1,54 @@
+# ─── Build artefacts ───────────────────────────────────────────────────────
+build/
+out/
+*.o
+*.elf
+*.bin
+*.hex
+*.map
+*.lst
+*.d
+
+# ─── STM32CubeMX ──────────────────────────────────────────────────────────
+*.ioc.bak
+Drivers/            # STM32 HAL/CMSIS generated libraries (regeneratable)
+Middlewares/
+
+# ─── IDEs ─────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.code-workspace
+*.uvoptx
+*.uvprojx
+*.uvguix
+*.uvgui
+*.uvgui.*
+*.Uv2
+*.dep
+RTE/
+
+# ─── Toolchain ─────────────────────────────────────────────────────────────
+*.su          # Stack usage files (arm-none-eabi-gcc)
+
+# ─── OpenOCD / debug ───────────────────────────────────────────────────────
+*.cfg.local
+openocd.log
+
+# ─── OS ────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*~
+
+# ─── Python tooling ────────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# ─── Log captures / CAN traces (may be large) ──────────────────────────────
+*.log
+*.trc
+*.asc
+*.blf
+*.mf4

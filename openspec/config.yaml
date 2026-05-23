@@ -1,0 +1,35 @@
+schema: spec-driven
+
+context: |
+  Project: Ford Focus CAN Bus Decoding Module
+  Goal: Firmware playground for decoding CAN bus frames from a Ford Focus vehicle network,
+  targeting the STM32 microcontroller family (exact variant TBD — likely STM32F103 or STM32G4).
+
+  Language: C (bare-metal / CMSIS, or STM32 HAL — TBD)
+  CAN controller: bxCAN (STM32F1/F4) or FDCAN (STM32G0/G4/H7)
+  Buses: HS-CAN at 500 kbps (powertrain), MS-CAN at 125 kbps (body/HVAC)
+  Toolchain: arm-none-eabi-gcc, OpenOCD / STLink for flashing
+  Build system: TBD (Makefile or CMake)
+
+  Firmware is split into three layers:
+    1. HAL (src/hal/) — MCU-specific peripheral drivers (CAN, UART, GPIO, timers)
+    2. Decoder (src/can_decoder.c) — stateless signal extraction from raw CAN frames
+    3. Application (src/main.c) — wires HAL + decoder, handles output (UART JSON log)
+
+  CAN message/signal definitions are maintained in openspec/specs/ and should
+  drive both documentation and eventual code-generation tooling.
+
+  Conventions:
+    - Conventional commits (feat:, fix:, chore:, docs:)
+    - C99, snake_case, prefix all public symbols with canmod_
+    - Debug output: UART at 115200 baud, JSON lines
+    - All physical values use SI units where applicable
+
+rules:
+  proposal:
+    - Include "Non-goals" section to keep scope tight
+    - Note which CAN bus (HS-CAN or MS-CAN) is affected
+    - Specify whether change is HAL, Decoder, or Application layer
+  tasks:
+    - Break tasks into chunks implementable in a single session
+    - Each hardware-touching task must include a "Verification" step
