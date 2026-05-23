@@ -7,31 +7,31 @@
 
 ## 2. Repository Structure and Build System
 
-- [ ] 2.1 Restructure source tree to match design: create `src/hal/stm32f1/`, `src/hal/host/`, `src/cars/`, `src/output/` directories. Move or create stub files in each.
-- [ ] 2.2 Add `cmake/toolchain-arm.cmake` for arm-none-eabi-gcc targeting Cortex-M3 (STM32F103). Verify: `cmake -DCANMOD_TARGET=stm32f1 -DCMAKE_TOOLCHAIN_FILE=cmake/toolchain-arm.cmake ..` configures without error.
-- [ ] 2.3 Add `cmake/toolchain-host.cmake` for x86 gcc. Verify: `cmake -DCANMOD_TARGET=host -DCMAKE_TOOLCHAIN_FILE=cmake/toolchain-host.cmake ..` configures without error.
-- [ ] 2.4 Add libopencm3 as a git submodule at `lib/libopencm3` and wire it into the ARM CMake target.
-- [ ] 2.5 Add `CANMOD_OUTPUT` CMake option (`json` | `raise`) and ensure the correct output driver source file is compiled based on the selection.
+- [x] 2.1 Restructure source tree to match design: create `src/hal/stm32f1/`, `src/hal/host/`, `src/cars/`, `src/output/` directories. Move or create stub files in each.
+- [x] 2.2 Add `cmake/toolchain-arm.cmake` for arm-none-eabi-gcc targeting Cortex-M3 (STM32F103). Verify: `cmake -DCANMOD_TARGET=stm32f1 -DCMAKE_TOOLCHAIN_FILE=cmake/toolchain-arm.cmake ..` configures without error.
+- [x] 2.3 Add `cmake/toolchain-host.cmake` for x86 gcc. Verify: `cmake -DCANMOD_TARGET=host -DCMAKE_TOOLCHAIN_FILE=cmake/toolchain-host.cmake ..` configures without error.
+- [x] 2.4 Add libopencm3 as a git submodule at `lib/libopencm3` and wire it into the ARM CMake target.
+- [x] 2.5 Add `CANMOD_OUTPUT` CMake option (`json` | `raise`) and ensure the correct output driver source file is compiled based on the selection.
 
 ## 3. car.h API and car module skeleton
 
-- [ ] 3.1 Write `src/car.h` defining all `car_get_*` function declarations, the `e_selector_t` enum, the `struct radar_t` type, and the `canmod_swc_event_t` type. Ensure no CAN frame types leak into this header.
-- [ ] 3.2 Write `src/cars/ford_focus_mk3_2015.c` as a skeleton: all `car_get_*` functions returning safe defaults (0 / `e_selector_p` / `e_radar_undef`). Verify it compiles on both ARM and host targets.
-- [ ] 3.3 Add the SWC event FIFO (`canmod_swc_event_t` ring buffer, 8 entries) to the car module. Verify: enqueue 8 events then a 9th — the oldest is dropped, newest is stored.
+- [x] 3.1 Write `src/car.h` defining all `car_get_*` function declarations, the `e_selector_t` enum, the `struct radar_t` type, and the `canmod_swc_event_t` type. Ensure no CAN frame types leak into this header.
+- [x] 3.2 Write `src/cars/ford_focus_mk3_2015.c` as a skeleton: all `car_get_*` functions returning safe defaults (0 / `e_selector_p` / `e_radar_undef`). Verify it compiles on both ARM and host targets.
+- [x] 3.3 Add the SWC event FIFO (`canmod_swc_event_t` ring buffer, 8 entries) to the car module. Verify: enqueue 8 events then a 9th — the oldest is dropped, newest is stored.
 
 ## 4. STM32F103 HAL (ARM target)
 
-- [ ] 4.1 Implement `src/hal/stm32f1/can_hal.c`: bxCAN init at 125 kbps, Rx interrupt, hardware acceptance filters for confirmed MS-CAN IDs from Task 1.2. **Verification**: connect to vcan0 via USB-CAN adapter, send a known MS-CAN frame ID, verify Rx interrupt fires.
-- [ ] 4.2 Implement `src/hal/stm32f1/uart_hal.c`: USART2 at 38400 baud, 8N1 for head unit UART; USART1 at 115200 for debug. **Verification**: transmit `0x2E 0x41 0x00 0xBE` (empty 0x41 packet) and verify bytes on USB-UART adapter at 38400.
-- [ ] 4.3 Implement `src/hal/stm32f1/usb_hal.c`: USB CDC using libopencm3. **Verification**: connect Blue Pill to laptop, open CDC serial port, verify characters are received.
-- [ ] 4.4 Implement `src/hal/stm32f1/timer_hal.c`: SysTick at 1 ms, `hw_tick_get()` returning monotonic ms counter. **Verification**: toggle LED every 500 ms using the tick counter; verify 1 Hz blink rate with a phone stopwatch.
-- [ ] 4.5 Implement `src/hal/stm32f1/gpio_hal.c`: PC13 LED heartbeat. **Verification**: heartbeat blinks at 1 Hz on a powered Blue Pill with no other hardware connected.
+- [x] 4.1 Implement `src/hal/stm32f1/can_hal.c`: bxCAN init at 125 kbps, Rx interrupt, hardware acceptance filters for confirmed MS-CAN IDs from Task 1.2. **Verification**: connect to vcan0 via USB-CAN adapter, send a known MS-CAN frame ID, verify Rx interrupt fires.
+- [x] 4.2 Implement `src/hal/stm32f1/uart_hal.c`: USART2 at 38400 baud, 8N1 for head unit UART; USART1 at 115200 for debug. **Verification**: transmit `0x2E 0x41 0x00 0xBE` (empty 0x41 packet) and verify bytes on USB-UART adapter at 38400.
+- [x] 4.3 Implement `src/hal/stm32f1/usb_hal.c`: USB CDC using libopencm3. **Verification**: connect Blue Pill to laptop, open CDC serial port, verify characters are received.
+- [x] 4.4 Implement `src/hal/stm32f1/timer_hal.c`: SysTick at 1 ms, `hw_tick_get()` returning monotonic ms counter. **Verification**: toggle LED every 500 ms using the tick counter; verify 1 Hz blink rate with a phone stopwatch.
+- [x] 4.5 Implement `src/hal/stm32f1/gpio_hal.c`: PC13 LED heartbeat. **Verification**: heartbeat blinks at 1 Hz on a powered Blue Pill with no other hardware connected.
 
 ## 5. Host HAL (x86 target)
 
-- [ ] 5.1 Implement `src/hal/host/can_hal.c`: open a `PF_CAN` SocketCAN socket on the interface named by `--interface` argument (default: `vcan0`). `can_hal_rx()` is non-blocking (uses `O_NONBLOCK`). **Verification**: `sudo ip link add vcan0 type vcan && ip link set up vcan0`, run `canmod-host`, send `cansend vcan0 3B5#0300002B00000000`, verify frame is received.
-- [ ] 5.2 Implement `src/hal/host/uart_hal.c`: write Raise packets to a named PTY (printed at startup) so they can be monitored with `cat`. **Verification**: run `canmod-host --output raise`, cat the PTY, inject a frame that triggers a SWC packet, verify `2E 20 02 01 01 ...` bytes appear.
-- [ ] 5.3 Implement `src/hal/host/timer_hal.c`: use `clock_gettime(CLOCK_MONOTONIC)` for ms tick. **Verification**: inject 10 frames 10 ms apart via `canplayer`; verify JSON timestamps increment by ~10 ms each.
+- [x] 5.1 Implement `src/hal/host/can_hal.c`: open a `PF_CAN` SocketCAN socket on the interface named by `--interface` argument (default: `vcan0`). `can_hal_rx()` is non-blocking (uses `O_NONBLOCK`). **Verification**: `sudo ip link add vcan0 type vcan && ip link set up vcan0`, run `canmod-host`, send `cansend vcan0 3B5#0300002B00000000`, verify frame is received.
+- [x] 5.2 Implement `src/hal/host/uart_hal.c`: write Raise packets to a named PTY (printed at startup) so they can be monitored with `cat`. **Verification**: run `canmod-host --output raise`, cat the PTY, inject a frame that triggers a SWC packet, verify `2E 20 02 01 01 ...` bytes appear.
+- [x] 5.3 Implement `src/hal/host/timer_hal.c`: use `clock_gettime(CLOCK_MONOTONIC)` for ms tick. **Verification**: inject 10 frames 10 ms apart via `canplayer`; verify JSON timestamps increment by ~10 ms each.
 
 ## 6. Ford Focus MS-CAN Decoder
 
@@ -47,21 +47,21 @@
 
 ## 7. JSON Log Output Driver (Phase 1)
 
-- [ ] 7.1 Implement `src/output/json_log.c`: on each decoded frame emit NDJSON line `{"ts":<ms>,"id":"0xXXX","signals":{...}}` over USB CDC. **Verification**: build with `CANMOD_OUTPUT=json`, connect Blue Pill to laptop, open CDC serial, replay a 30-second capture — verify JSON lines appear and values match FORScan readings.
+- [x] 7.1 Implement `src/output/json_log.c`: on each decoded frame emit NDJSON line `{"ts":<ms>,"id":"0xXXX","signals":{...}}` over USB CDC. **Verification**: build with `CANMOD_OUTPUT=json`, connect Blue Pill to laptop, open CDC serial, replay a 30-second capture — verify JSON lines appear and values match FORScan readings.
 - [ ] 7.2 Capture a 10-minute baseline JSON log from the real car using the Phase 1 firmware. Save to `tools/captures/baseline_json.ndjson`. This becomes the permanent regression corpus.
 
 ## 8. Raise UART Output Driver (Phase 2)
 
-- [ ] 8.1 Port `canbox_raise_vw_vehicle_info()` from smartgauges/canbox to `src/output/raise.c`. Adapt to use `canmod_` prefixed HAL calls. **Verification**: build with `CANMOD_OUTPUT=raise` on host target, replay a driving capture, verify 0x41/0x02 packets appear on the PTY at ~500 ms intervals with correct speed bytes.
-- [ ] 8.2 Implement door status packet (0x41/0x01). **Verification**: replay log with door open; verify 0x41 0x01 packet transmitted with correct door bit set.
-- [ ] 8.3 Implement warning flags packet (0x41/0x03). **Verification**: inject a low-fuel frame; verify 0x41 0x03 packet with bit7 set is transmitted.
-- [ ] 8.4 Implement status flags packet (0x24) — reverse, park brake, near lights. **Verification**: replay reverse engage segment; verify 0x24 packet with bit0=1 transmitted.
-- [ ] 8.5 Implement parking active packet (0x25). **Verification**: replay PDC-active segment; verify 0x25 0x02 packet transmitted on activation, 0x25 0x00 on deactivation.
-- [ ] 8.6 Implement rear radar packet (0x22) and front radar packet (0x23). **Verification**: replay PDC segment with known distances; verify radar packets contain correctly scaled and inverted distance values (formula: `(rmax + 1) - scale(raw, 0, 99, 0, rmax)` with max=10).
-- [ ] 8.7 Implement steering angle packet (0x26). **Verification**: replay steering segment; verify 0x26 packets contain signed int16_t values in range -540 to +540.
-- [ ] 8.8 Implement AC status packet (0x21) — all 5 bytes (AC on, fan speed, temps, recirculation, airflow, dual zone, seat heat). **Verification**: replay AC-on segment at 21°C, fan 3; verify 0x21 packet byte layout matches canbox.c encoding.
-- [ ] 8.9 Implement SWC button packet (0x20) — press and release. **Verification**: replay SWC segment with Vol+ press; verify 0x20 `[0x01, 0x01]` followed immediately by 0x20 `[0x01, 0x00]`.
-- [ ] 8.10 Implement head unit RX handler: parse incoming 0x2E packets from ATOTO, send 0xFF ACK. **Verification**: connect to ATOTO UART via USB-UART adapter, power on ATOTO in Raise mode, verify 0xFF ACKs are transmitted after each head unit packet.
+- [x] 8.1 Port `canbox_raise_vw_vehicle_info()` from smartgauges/canbox to `src/output/raise.c`. Adapt to use `canmod_` prefixed HAL calls. **Verification**: build with `CANMOD_OUTPUT=raise` on host target, replay a driving capture, verify 0x41/0x02 packets appear on the PTY at ~500 ms intervals with correct speed bytes.
+- [x] 8.2 Implement door status packet (0x41/0x01). **Verification**: replay log with door open; verify 0x41 0x01 packet transmitted with correct door bit set.
+- [x] 8.3 Implement warning flags packet (0x41/0x03). **Verification**: inject a low-fuel frame; verify 0x41 0x03 packet with bit7 set is transmitted.
+- [x] 8.4 Implement status flags packet (0x24) — reverse, park brake, near lights. **Verification**: replay reverse engage segment; verify 0x24 packet with bit0=1 transmitted.
+- [x] 8.5 Implement parking active packet (0x25). **Verification**: replay PDC-active segment; verify 0x25 0x02 packet transmitted on activation, 0x25 0x00 on deactivation.
+- [x] 8.6 Implement rear radar packet (0x22) and front radar packet (0x23). **Verification**: replay PDC segment with known distances; verify radar packets contain correctly scaled and inverted distance values (formula: `(rmax + 1) - scale(raw, 0, 99, 0, rmax)` with max=10).
+- [x] 8.7 Implement steering angle packet (0x26). **Verification**: replay steering segment; verify 0x26 packets contain signed int16_t values in range -540 to +540.
+- [x] 8.8 Implement AC status packet (0x21) — all 5 bytes (AC on, fan speed, temps, recirculation, airflow, dual zone, seat heat). **Verification**: replay AC-on segment at 21°C, fan 3; verify 0x21 packet byte layout matches canbox.c encoding.
+- [x] 8.9 Implement SWC button packet (0x20) — press and release. **Verification**: replay SWC segment with Vol+ press; verify 0x20 `[0x01, 0x01]` followed immediately by 0x20 `[0x01, 0x00]`.
+- [x] 8.10 Implement head unit RX handler: parse incoming 0x2E packets from ATOTO, send 0xFF ACK. **Verification**: connect to ATOTO UART via USB-UART adapter, power on ATOTO in Raise mode, verify 0xFF ACKs are transmitted after each head unit packet.
 
 ## 9. Hardware Integration and ATOTO Validation
 
