@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-and-test:
+    name: Host build + CTest
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout (with submodules)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y gcc cmake
+
+      - name: Configure (host/json)
+        run: |
+          cmake \
+            -DCANMOD_TARGET=host \
+            -DCANMOD_OUTPUT=json \
+            -DCMAKE_TOOLCHAIN_FILE=cmake/toolchain-host.cmake \
+            -B build/host \
+            .
+
+      - name: Build
+        run: cmake --build build/host --parallel
+
+      - name: Run tests
+        run: ctest --test-dir build/host --output-on-failure

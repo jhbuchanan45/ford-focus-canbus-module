@@ -130,6 +130,10 @@ elseif(CANMOD_TARGET STREQUAL "host")
     # on modern Linux.  Link pthread for clock_gettime on older glibc.
     target_link_libraries(canmod-host PRIVATE m)
 
+    # Unit test suite (ctest --test-dir build/host)
+    enable_testing()
+    add_subdirectory(tests)
+
 else()
     message(FATAL_ERROR
         "CANMOD_TARGET must be 'stm32f1' or 'host' (got '${CANMOD_TARGET}').\n"

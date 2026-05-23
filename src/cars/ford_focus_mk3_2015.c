@@ -294,3 +294,64 @@ uint8_t car_get_air_dual_zone(void)     { return s_state.dual_zone; }
 int16_t car_get_wheel(void)             { return s_state.wheel; }
 
 radar_t car_get_radar(void)             { return s_state.radar; }
+
+/* -------------------------------------------------------------------------
+ * Test-only API — compiled only when CANMOD_TESTING is defined.
+ * Provides direct state injection so unit tests can set up known car state
+ * without needing real CAN frames (decode stubs are all no-ops until 6.x).
+ * ---------------------------------------------------------------------- */
+
+#ifdef CANMOD_TESTING
+
+void car_test_reset(void)
+{
+    memset(&s_state, 0, sizeof(s_state));
+    s_swc.head  = 0;
+    s_swc.tail  = 0;
+    s_swc.count = 0;
+}
+
+void car_test_set_speed(uint16_t v)          { s_state.speed       = v; }
+void car_test_set_taho(uint16_t v)           { s_state.rpm         = v; }
+void car_test_set_temp(int8_t v)             { s_state.coolant_temp = v; }
+void car_test_set_voltage(uint16_t v)        { s_state.voltage_mv  = v; }
+void car_test_set_odometer(uint32_t v)       { s_state.odometer_km = v; }
+
+void car_test_set_selector(e_selector_t v)   { s_state.selector    = v; }
+void car_test_set_park_brake(uint8_t v)      { s_state.park_brake  = v; }
+
+void car_test_set_door_fl(uint8_t v)         { s_state.door_fl     = v; }
+void car_test_set_door_fr(uint8_t v)         { s_state.door_fr     = v; }
+void car_test_set_door_rl(uint8_t v)         { s_state.door_rl     = v; }
+void car_test_set_door_rr(uint8_t v)         { s_state.door_rr     = v; }
+void car_test_set_tailgate(uint8_t v)        { s_state.tailgate    = v; }
+void car_test_set_bonnet(uint8_t v)          { s_state.bonnet      = v; }
+
+void car_test_set_near_lights(uint8_t v)     { s_state.near_lights = v; }
+
+void car_test_set_air_ac(uint8_t v)          { s_state.ac_on          = v; }
+void car_test_set_air_fan(uint8_t v)         { s_state.fan_speed       = v; }
+void car_test_set_air_temp_driver(uint8_t v) { s_state.temp_driver     = v; }
+void car_test_set_air_temp_pass(uint8_t v)   { s_state.temp_pass       = v; }
+void car_test_set_air_recirculation(uint8_t v){ s_state.recirculation  = v; }
+void car_test_set_air_wind(uint8_t v)        { s_state.air_wind        = v; }
+void car_test_set_air_middle(uint8_t v)      { s_state.air_middle      = v; }
+void car_test_set_air_floor(uint8_t v)       { s_state.air_floor       = v; }
+void car_test_set_air_dual_zone(uint8_t v)   { s_state.dual_zone       = v; }
+
+void car_test_set_wheel(int16_t v)           { s_state.wheel           = v; }
+
+void car_test_set_radar_state(e_radar_state_t v) { s_state.radar.state = v; }
+void car_test_set_radar_dist(uint8_t idx, uint8_t v)
+{
+    if (idx < RADAR_SENSOR_COUNT)
+        s_state.radar.dist[idx] = v;
+}
+
+/** Directly enqueue an SWC event (bypasses the CAN decode path). */
+void car_test_enqueue_swc(uint8_t button_id, uint8_t pressed)
+{
+    swc_enqueue(button_id, pressed);
+}
+
+#endif /* CANMOD_TESTING */
