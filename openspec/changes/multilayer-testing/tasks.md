@@ -47,4 +47,4 @@
 ## 7. CI Pipeline
 
 - [x] 7.1 Create `.github/workflows/ci.yml`. Steps: checkout (with submodules), install `gcc` and `cmake`, configure with `CANMOD_TARGET=host CANMOD_OUTPUT=json`, build, run `ctest --test-dir build/host --output-on-failure`. Run on push and pull_request to all branches.
-- [ ] 7.2 Verify CI passes: push the branch, confirm the Actions run completes green with all tests reported.
+- [x] 7.2 Verify CI passes: push the branch, confirm the Actions run completes green with all tests reported.
