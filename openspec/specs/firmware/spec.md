@@ -2,87 +2,87 @@
 
 ## Overview
 
-Portable, layered firmware for decoding CAN bus frames on an STM32 microcontroller.
-The firmware is chip-agnostic at the Decoder and Application layers; only the HAL is MCU-specific.
+Portable, layered firmware for decoding Ford Focus Mk3 MS-CAN frames on an STM32F103C8T6 and outputting the Raise VW PQ protocol to an ATOTO S8 MS head unit. The firmware is chip-agnostic at the Car Module and Output Driver layers; only the HAL is MCU-specific.
 
 ## Layers
 
 ### 1. Hardware Abstraction Layer (HAL) — `src/hal/`
 
-**Responsibility:** Wrap all MCU-specific peripheral access.
+**Responsibility:** Wrap all MCU-specific peripheral access. Swapping MCU target means only modifying `src/hal/`; all layers above are untouched.
 
 | Module | File | Responsibility |
 |--------|------|----------------|
-| CAN peripheral | `can_hal.c/.h` | Init, Tx/Rx, hardware filter config |
-| UART | `uart_hal.c/.h` | Debug output at 115200 baud |
-| GPIO | `gpio_hal.c/.h` | LED indicators, digital outputs |
-| Timers | `timer_hal.c/.h` | Periodic tick, watchdog |
+| CAN peripheral | `can_hal.c/.h` | Init bxCAN at 125 kbps, Rx via interrupt, hardware acceptance filters |
+| UART (head unit) | `uart_hal.c/.h` | Raise protocol UART at 38400 baud 8N1 |
+| USB CDC | `usb_hal.c/.h` | USB CDC output for JSON log driver (Phase 1) |
+| GPIO | `gpio_hal.c/.h` | PC13 LED heartbeat |
+| Timers | `timer_hal.c/.h` | 1 ms SysTick, `hw_tick_get()` monotonic counter |
 
-**Requirements:**
-- `canmod_hal_can_init(bus_id, baud_kbps)` initialises the CAN peripheral
-- `canmod_hal_can_rx(frame)` is non-blocking; returns 0 if no frame available
-- Swapping MCU target means only modifying `src/hal/`; decoder and app layers are untouched
+Two HAL implementations exist:
 
-### 2. Decoder Layer — `src/can_decoder.c/.h`
+| Target | Directory | Backend |
+|--------|-----------|---------|
+| STM32F103C8T6 | `src/hal/stm32f1/` | libopencm3, bxCAN remapped to PB8/PB9 |
+| x86 host | `src/hal/host/` | SocketCAN (`PF_CAN`), PTY UART, stdout USB |
 
-**Responsibility:** Stateless extraction of named signals from raw CAN frames.
+### 2. Car Module — `src/cars/ford_focus_mk3_2015.c`
 
-- Input: `canmod_frame_t { uint32_t id; uint8_t dlc; uint8_t data[8]; }`
-- Output: `canmod_signal_t { const char *name; double value; const char *unit; }`
-- Handles: bit extraction, little-endian (Intel) and big-endian (Motorola) byte orders, scale, offset
-- Message/signal definitions hardcoded initially; code generation from spec is a future goal
+**Responsibility:** The ONLY file that reads raw CAN frame data. Maintains internal signal state and exposes it exclusively through the `car_get_*` API. Swapping vehicle model means replacing only this file.
 
-**Requirements:**
-- `canmod_decode(frame, signals_out, max_signals)` returns count of signals decoded
-- Returns 0 for unknown/unfiltered frame IDs
-- No dynamic allocation; all buffers caller-provided
+- Entry point: `car_process_frame(id, data, dlc)` — called by the main loop for every received frame
+- Output: `car_get_*()` functions defined in `src/car.h`
+- SWC events: internal 8-entry drop-oldest FIFO, consumed via `car_swc_dequeue()`
 
-### 3. Application Layer — `src/main.c`
+### 3. Output Driver — `src/output/`
 
-**Responsibility:** Wire HAL and Decoder; manage the main loop and output.
+**Responsibility:** Read car state via `car_get_*()` and produce output. Two drivers, selected at compile time by `-DCANMOD_OUTPUT=json|raise`:
 
-**Requirements:**
-- Receive loop polls or handles interrupt from HAL CAN Rx
-- Each decoded frame is emitted as a JSON line over UART:
-  `{"ts":<ms>,"id":"0x201","signals":{"rpm":2350.0,"throttle_position":23.5}}`
-- Watchdog reset on hang (> 1 s without a frame on active bus)
-- LED heartbeat at 1 Hz to indicate firmware is running
+| Driver | File | Output |
+|--------|------|--------|
+| JSON log | `json_log.c` | NDJSON over USB CDC — Phase 1 development |
+| Raise VW PQ | `raise.c` | Raise protocol packets over UART 38400 — Phase 2 production |
+
+### 4. Application Layer — `src/main.c`
+
+**Responsibility:** Wire HAL, car module, and output driver. Run the main loop with periodic output timers.
+
+- Initialises all HAL modules and the output driver
+- Polls `can_hal_rx()` and calls `car_process_frame()` on each received frame
+- Maintains periodic timers (500 ms: vehicle info, doors, warnings, status, AC; 100 ms: steering, radar when active)
+- Dispatches SWC events immediately via `car_swc_dequeue()`
 
 ## Directory Structure
 
 ```
 src/
 ├── main.c
-├── can_decoder.c
-├── can_decoder.h
-└── hal/
-    ├── can_hal.c
-    ├── can_hal.h
-    ├── uart_hal.c
-    ├── uart_hal.h
-    ├── gpio_hal.c
-    ├── gpio_hal.h
-    ├── timer_hal.c
-    └── timer_hal.h
+├── car.h                          # Public car module API (no CAN types)
+├── cars/
+│   └── ford_focus_mk3_2015.c     # Vehicle-specific MS-CAN decoder
+├── hal/
+│   ├── can_hal.h / uart_hal.h / usb_hal.h / gpio_hal.h / timer_hal.h
+│   ├── stm32f1/                  # STM32F103 implementation (libopencm3)
+│   └── host/                     # x86 SocketCAN stub
+└── output/
+    ├── raise.c / raise.h         # Raise VW PQ UART protocol
+    └── json_log.c / json_log.h   # NDJSON USB CDC log
 tests/
-└── test_decoder.c     # Host-runnable unit tests (no MCU needed)
-tools/
-└── log_parse.py       # PC-side tool to parse UART JSON log
+├── mocks/                        # HAL mock implementations (CTest)
+├── test_runner.h                 # TEST_ASSERT macros
+└── test_*.c                      # Per-capability test executables
+cmake/
+├── toolchain-arm.cmake           # arm-none-eabi-gcc, Cortex-M3
+└── toolchain-host.cmake          # x86 gcc
+lib/
+└── libopencm3/                   # Git submodule (ARM target only)
 ```
-
-## Non-goals (v0)
-
-- BLE / USB output (UART only for now)
-- Code generation from openspec specs (manual sync initially)
-- Writing/transmitting CAN frames
-- Multi-bus simultaneous decode (single bus per firmware build initially)
 
 ## Build System
 
 ### Requirement: Build system supports ARM and x86 host targets via CMake
 The project SHALL use CMake with two toolchain files: `cmake/toolchain-arm.cmake` (arm-none-eabi-gcc, Cortex-M3) and `cmake/toolchain-host.cmake` (gcc for x86). Output driver is selected via `-DCANMOD_OUTPUT=json|raise`. Target is selected via `-DCANMOD_TARGET=stm32f1|host`.
 
-When `CANMOD_TARGET=host`, the build SHALL additionally produce a `canmod-tests` executable registered with CTest. Running `cmake --build build/host && ctest --test-dir build/host` SHALL build and execute the full unit test suite.
+When `CANMOD_TARGET=host`, the build SHALL additionally produce all test executables registered with CTest.
 
 #### Scenario: ARM firmware build
 - **WHEN** `cmake -DCANMOD_TARGET=stm32f1 -DCANMOD_OUTPUT=raise -DCMAKE_TOOLCHAIN_FILE=cmake/toolchain-arm.cmake ..`
@@ -94,4 +94,11 @@ When `CANMOD_TARGET=host`, the build SHALL additionally produce a `canmod-tests`
 
 #### Scenario: Host test build
 - **WHEN** `cmake -DCANMOD_TARGET=host -DCANMOD_OUTPUT=json -DCMAKE_TOOLCHAIN_FILE=cmake/toolchain-host.cmake .. && cmake --build . && ctest`
-- **THEN** a `canmod-tests` executable is produced and CTest reports all registered tests
+- **THEN** all registered test executables are built and CTest reports all tests passing
+
+## Non-goals (v1)
+
+- BLE output
+- Multi-bus simultaneous decode (MS-CAN only)
+- Writing / transmitting CAN frames
+- OBD-II PID parsing
