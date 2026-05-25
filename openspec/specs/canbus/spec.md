@@ -1,116 +1,168 @@
-# CAN Bus Signal Spec
+# CAN Bus Signal Spec — Ford Focus Mk3 2015 (MS-CAN)
 
-## Overview
+## Purpose
 
-Defines the CAN message IDs and signal definitions for Ford Focus HS-CAN and MS-CAN networks.
-This is the source of truth for what the decoder layer implements.
+Defines the MS-CAN message IDs and byte-level signal definitions for the Ford Focus Mk3 2015 Titanium decoded by this firmware.
 
-## Buses
+**Only MS-CAN (125 kbps) is used.** MS-CAN is accessed via the quad-lock connector (pins A9 H / A10 L). HS-CAN (500 kbps) is not connected. Powertrain signals (speed, RPM, temperature) that live natively on HS-CAN are available on MS-CAN as copies mirrored by the GEM gateway module.
 
-| ID | Name | Baud Rate | Description |
-|----|------|-----------|-------------|
-| `hs_can` | High-Speed CAN | 500 kbps | Powertrain, ABS, engine, transmission. Accessible via OBD-II pins 6 (H) and 14 (L) |
-| `ms_can` | Medium-Speed CAN | 125 kbps | Body electronics: HVAC, instrument cluster, lighting, BCM |
-
-## Signal Definition Format
-
-Each signal within a message is described by:
-
-| Field | Description |
-|-------|-------------|
-| `start_bit` | LSB index (Intel) or MSB index (Motorola) |
-| `bit_length` | Number of bits |
-| `byte_order` | `little_endian` (Intel) or `big_endian` (Motorola) |
-| `value_type` | `unsigned` or `signed` |
-| `scale` | Multiply raw value (physical = raw × scale + offset) |
-| `offset` | Add after scaling |
-| `unit` | Engineering unit |
-| `range` | [min, max] in physical units (informational) |
+All IDs and byte layouts below are **⚠ community-researched estimates**. Each is marked for confirmation via FORScan capture on the target vehicle (task 1.2). Update the ⚠ markers and correct any wrong fields once confirmed.
 
 ---
 
-## HS-CAN Messages
+## Requirements
 
-### 0x201 — ENGINE_RPM
-- Cycle: 10 ms
+### Requirement: All eleven MS-CAN message IDs are decoded by the car module
+The car module SHALL decode all eleven MS-CAN message IDs listed below. All byte layouts are community-researched estimates marked ⚠ until verified against FORScan capture on the target vehicle.
 
-| Signal | Start Bit | Length | Order | Type | Scale | Offset | Unit | Range |
-|--------|-----------|--------|-------|------|-------|--------|------|-------|
-| `rpm` | 0 | 16 | big_endian | unsigned | 0.25 | 0 | rpm | 0–8000 |
-| `throttle_position` | 24 | 8 | big_endian | unsigned | 0.392 | 0 | % | 0–100 |
-
-### 0x202 — VEHICLE_SPEED
-- Cycle: 20 ms
-
-| Signal | Start Bit | Length | Order | Type | Scale | Offset | Unit | Range |
-|--------|-----------|--------|-------|------|-------|--------|------|-------|
-| `vehicle_speed` | 0 | 16 | big_endian | unsigned | 0.01 | 0 | km/h | 0–280 |
-| `wheel_speed_fl` | 16 | 16 | big_endian | unsigned | 0.01 | 0 | km/h | 0–280 |
-| `wheel_speed_fr` | 32 | 16 | big_endian | unsigned | 0.01 | 0 | km/h | 0–280 |
-
-### 0x420 — ENGINE_TEMPS
-- Cycle: 1000 ms
-
-| Signal | Start Bit | Length | Order | Type | Scale | Offset | Unit | Range |
-|--------|-----------|--------|-------|------|-------|--------|------|-------|
-| `coolant_temp` | 0 | 8 | big_endian | unsigned | 1 | -40 | °C | -40–215 |
-| `oil_temp` | 8 | 8 | big_endian | unsigned | 1 | -40 | °C | -40–215 |
-
-### 0x703 — ABS_STATUS
-- Cycle: 20 ms
-
-| Signal | Start Bit | Length | Order | Type | Scale | Offset | Unit | Range |
-|--------|-----------|--------|-------|------|-------|--------|------|-------|
-| `abs_active` | 0 | 1 | big_endian | unsigned | 1 | 0 | bool | 0–1 |
-| `traction_control_active` | 1 | 1 | big_endian | unsigned | 1 | 0 | bool | 0–1 |
-| `esp_active` | 2 | 1 | big_endian | unsigned | 1 | 0 | bool | 0–1 |
+#### Scenario: Known frame decoded and state updated
+- **WHEN** a valid CAN frame is received for any of the eleven IDs listed below
+- **THEN** the car module updates the corresponding internal signal state within one main loop tick
 
 ---
 
 ## MS-CAN Messages
 
-### 0x072 — INSTRUMENT_CLUSTER
-- Cycle: 100 ms
+### 0x072 — BCM Odometer
+- Cycle: 1000 ms (estimated)
 
-| Signal | Start Bit | Length | Order | Type | Scale | Offset | Unit | Range |
-|--------|-----------|--------|-------|------|-------|--------|------|-------|
-| `odometer` | 0 | 24 | big_endian | unsigned | 1 | 0 | km | 0–16777215 |
+| Signal | Bytes | Type | Scale | Offset | Unit | Range |
+|--------|-------|------|-------|--------|------|-------|
+| `odometer` | d[1..3] 24-bit BE | unsigned | 1 | 0 | km | 0–16,777,215 |
 
-### 0x3B5 — HVAC_STATUS
-- Cycle: 500 ms
+### 0x080 — EPAS Steering Angle ⚠
+- Cycle: 10 ms (estimated)
+- Source: Electric Power Assisted Steering column module
 
-| Signal | Start Bit | Length | Order | Type | Scale | Offset | Unit | Range |
-|--------|-----------|--------|-------|------|-------|--------|------|-------|
-| `fan_speed` | 0 | 4 | big_endian | unsigned | 1 | 0 | level | 0–8 |
-| `target_temp_driver` | 8 | 8 | big_endian | unsigned | 0.5 | 14 | °C | 14–28 |
-| `ac_compressor_on` | 32 | 1 | big_endian | unsigned | 1 | 0 | bool | 0–1 |
+| Signal | Bytes | Type | Scale | Offset | Unit | Range |
+|--------|-------|------|-------|--------|------|-------|
+| `steering_angle` | d[0..1] signed int16 BE | signed | 0.1 | 0 | degrees | -540 to +540 |
 
-### 0x4B0 — LIGHTING_STATUS
-- Cycle: 200 ms
+Internal unit: `deg × 10` (e.g. 3600 = 360.0°). Negative = left.
 
-| Signal | Start Bit | Length | Order | Type | Scale | Offset | Unit | Range |
-|--------|-----------|--------|-------|------|-------|--------|------|-------|
-| `low_beam` | 0 | 1 | big_endian | unsigned | 1 | 0 | bool | 0–1 |
-| `high_beam` | 1 | 1 | big_endian | unsigned | 1 | 0 | bool | 0–1 |
-| `fog_front` | 2 | 1 | big_endian | unsigned | 1 | 0 | bool | 0–1 |
-| `fog_rear` | 3 | 1 | big_endian | unsigned | 1 | 0 | bool | 0–1 |
-| `indicator_left` | 4 | 1 | big_endian | unsigned | 1 | 0 | bool | 0–1 |
-| `indicator_right` | 5 | 1 | big_endian | unsigned | 1 | 0 | bool | 0–1 |
+### 0x165 — TCM Gear Selector ⚠
+- Cycle: 100 ms (estimated)
+- Source: TCM (PowerShift gearbox), mirrored by GEM
+
+| Signal | Bytes | Encoding |
+|--------|-------|----------|
+| `gear_position` | d[0] | 0x00=P, 0x01=R, 0x02=N, 0x03=D |
+
+### 0x1A9 — Steering Wheel Controls ⚠
+- Cycle: event-driven
+- Source: Steering column module (SYNC 2 controls)
+
+| Signal | Bytes | Encoding |
+|--------|-------|----------|
+| `button_code` | d[0] | 0x00=none, 0x01=Vol+, 0x02=Vol−, 0x04=Next, 0x08=Prev, 0x10=Mode, 0x20=Mute, 0x40=Answer, 0x80=Hangup |
+| `button_state` | d[1] | 0x01=pressed, 0x00=released |
+
+### 0x217 — GEM Speed + RPM ⚠
+- Cycle: 20 ms (estimated)
+- Source: GEM gateway (mirrors HS-CAN powertrain values to MS-CAN)
+
+| Signal | Bytes | Type | Scale | Offset | Unit | Range |
+|--------|-------|------|-------|--------|------|-------|
+| `vehicle_speed` | d[0..1] BE | unsigned | 0.01 | 0 | km/h | 0–655 |
+| `engine_rpm` | d[2..3] BE | unsigned | 0.25 | 0 | RPM | 0–16383 |
+
+Internal units: speed = `km/h × 100`; RPM = raw `>> 2`.
+
+### 0x230 — BCM Battery Voltage ⚠
+- Cycle: 1000 ms (estimated)
+
+| Signal | Bytes | Type | Scale | Offset | Unit | Range |
+|--------|-------|------|-------|--------|------|-------|
+| `battery_voltage` | d[0..1] BE | unsigned | 0.1 | 0 | V | 0–65.5 |
+
+Internal unit: millivolts (raw × 100).
+
+### 0x3B5 — HVAC Module Climate State ⚠
+- Cycle: 500 ms (estimated)
+- Source: FCIM (Front Controls Interface Module)
+- Reference frame: `3B5#0300002B00000000`
+
+| Signal | Bytes | Bit | Encoding |
+|--------|-------|-----|----------|
+| `ac_on` | d[0] | 0 | 1=compressor on |
+| `recirculation` | d[0] | 1 | 1=recirculating |
+| `dual_zone` | d[0] | 2 | 1=dual zone active |
+| `fan_speed_raw` | d[1] | bits[3:0] | 0–15; Raise fan = raw >> 1 (0–7) |
+| `temp_driver` | d[2] | — | °C × 2 (e.g. 42 = 21.0°C) |
+| `temp_pass` | d[3] | — | °C × 2 |
+| `air_windscreen` | d[4] | 0 | 1=on |
+| `air_middle` | d[4] | 1 | 1=on |
+| `air_floor` | d[4] | 2 | 1=on |
+
+### 0x420 — GEM Coolant Temperature ⚠
+- Cycle: 1000 ms (estimated)
+- Source: GEM gateway (mirrors ECU coolant temp to MS-CAN)
+
+| Signal | Bytes | Type | Scale | Offset | Unit | Range |
+|--------|-------|------|-------|--------|------|-------|
+| `coolant_temp` | d[0] | unsigned | 1 | -40 | °C | -40–215 |
+
+### 0x4B0 — BCM Lighting Status ⚠
+- Cycle: 200 ms (estimated)
+
+| Signal | Bytes | Bit | Encoding |
+|--------|-------|-----|----------|
+| `near_lights` | d[0] | 0 | 1=sidelights or headlights on |
+
+### 0x540 — BCM Door / Body Status ⚠
+- Cycle: event-driven + 500 ms keepalive (estimated)
+
+| Signal | Bytes | Bit | Encoding |
+|--------|-------|-----|----------|
+| `door_fl` | d[0] | 0 | 1=open |
+| `door_fr` | d[0] | 1 | 1=open |
+| `door_rl` | d[0] | 2 | 1=open |
+| `door_rr` | d[0] | 3 | 1=open |
+| `tailgate` | d[0] | 4 | 1=open |
+| `bonnet` | d[0] | 5 | 1=open |
+| `park_brake` | d[0] | 6 | 1=engaged |
+
+### 0x5C0 — Parking Aid Module (PDC) ⚠
+- Cycle: 100 ms when active
+- ⚠ Availability at quad-lock MS-CAN must be confirmed (task 1.2). Only rear sensors are guaranteed; front sensors depend on fitment.
+
+| Signal | Bytes | Encoding |
+|--------|-------|----------|
+| `pdc_active` | d[0] bit 0 | 1=sensors active |
+| `rear_rl` | d[1] | Ford zone 0–6 (0=clear, 6=closest) → internal 0–99 |
+| `rear_rlm` | d[2] | same |
+| `rear_rrm` | d[3] | same |
+| `rear_rr` | d[4] | same |
+| `front_fl` | d[5] | same (if 8-sensor variant) |
+| `front_flm` | d[6] | same |
+| `front_frm` | d[7] | same |
+| `front_fr` | d[8] | same |
+
+Zone-to-distance conversion: `zone 0 → RADAR_DIST_CLEAR (99)`; `zone n (1–6) → (6−n) × 14`.
 
 ---
 
-## Unverified IDs (community research — needs confirmation on real bus)
+## Signal Summary Table
 
-| ID | Bus | Suspected Purpose |
-|----|-----|-------------------|
-| 0x080 | hs_can | Steering angle sensor |
-| 0x120 | hs_can | Fuel injection timing |
-| 0x230 | hs_can | Battery / charging system voltage |
-| 0x540 | ms_can | Door ajar / window position status |
-| 0x625 | ms_can | Power window control |
+| ID | Name | Signals decoded | Source |
+|----|------|-----------------|--------|
+| 0x072 | BCM Odometer | odometer | BCM |
+| 0x080 | EPAS Steering | steering_angle | EPAS column |
+| 0x165 | Gear Selector | gear_position | TCM/GEM |
+| 0x1A9 | SWC | button_code, button_state | Steering column |
+| 0x217 | GEM Speed/RPM | vehicle_speed, engine_rpm | GEM |
+| 0x230 | Battery | battery_voltage | BCM |
+| 0x3B5 | HVAC | ac_on, fan, temps, airflow, recirc, dual_zone | FCIM |
+| 0x420 | Coolant Temp | coolant_temp | GEM |
+| 0x4B0 | Lighting | near_lights | BCM |
+| 0x540 | Doors/Body | 6× doors, park_brake | BCM |
+| 0x5C0 | PDC | pdc_active, 8× sensor distances | PAM |
+
+---
 
 ## Non-goals
 
-- Transmitting CAN frames
+- HS-CAN (500 kbps OBD-II) is not connected or decoded
 - LIN bus signals (seat modules, mirrors)
-- OBD-II PID parsing (handled separately by ISO 15765-2 layer, out of scope for now)
+- OBD-II PID parsing
+- Transmitting CAN frames

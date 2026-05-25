@@ -1,6 +1,6 @@
 # Regression Testing Spec
 
-## Overview
+## Purpose
 
 A golden-file regression test (`tests/test_regression.c`) replays a captured FORScan log through `canmod-host` and diffs the JSON output against a saved baseline. The test is automatically skipped when capture files are absent so CI passes from day one.
 

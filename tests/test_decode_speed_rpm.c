@@ -1,45 +1,67 @@
 /**
  * test_decode_speed_rpm.c — Signal decode tests for CAN_ID_SPEED_RPM (0x217)
  *
- * STATUS: STUB — bodies guarded with #if 0 until task 6.1 implements
- * decode_speed_rpm() in ford_focus_mk3_2015.c.
- *
- * Pattern (D4 from design.md):
- *   1. car_process_frame(0x217, data, dlc)  — exercise the decode path
- *   2. car_get_speed() / car_get_taho()     — assert decoded values
+ * Layout (⚠ verify with FORScan — task 6.1):
+ *   d[0..1] big-endian uint16: speed in 0.01 km/h/bit (= km/h × 100)
+ *   d[2..3] big-endian uint16: RPM in 0.25 RPM/bit (raw >> 2 = RPM)
  */
 
 #include "test_runner.h"
 #include "test_helpers.h"
 
-int main(void)
+static void test_speed_decode(void)
 {
-#if 0 /* TODO: task 6.1 — fill in after FORScan confirms bit layout */
-
-    /* Speed: suspected scale 0.01 km/h/bit → 5000 = 50.00 km/h
-     * d[0..1] = raw value for 50.00 km/h = 5000 → 0x1388 */
     car_test_reset();
-    uint8_t data_speed[8] = {0x13, 0x88, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-    car_process_frame(0x217, data_speed, 8);
+    /* 50.00 km/h → internal 5000 → raw 0x1388 */
+    uint8_t d[8] = {0x13, 0x88, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+    car_process_frame(0x217, d, 8);
     TEST_ASSERT_EQ(car_get_speed(), 5000u);
+}
 
-    /* RPM: suspected scale 0.25 RPM/bit → 2000 RPM = 8000 raw → 0x1F40 */
+static void test_rpm_decode(void)
+{
     car_test_reset();
-    uint8_t data_rpm[8] = {0x00, 0x00, 0x1F, 0x40, 0x00, 0x00, 0x00, 0x00};
-    car_process_frame(0x217, data_rpm, 8);
+    /* 2000 RPM → raw = 2000 × 4 = 8000 = 0x1F40 */
+    uint8_t d[8] = {0x00, 0x00, 0x1F, 0x40, 0x00, 0x00, 0x00, 0x00};
+    car_process_frame(0x217, d, 8);
     TEST_ASSERT_EQ(car_get_taho(), 2000u);
+}
 
-    /* Zero values */
+static void test_speed_and_rpm_combined(void)
+{
     car_test_reset();
-    uint8_t data_zero[8] = {0};
-    car_process_frame(0x217, data_zero, 8);
+    /* speed = 12050 (120.50 km/h) = 0x2F12; rpm = 3500 → raw 14000 = 0x36B0 */
+    uint8_t d[8] = {0x2F, 0x12, 0x36, 0xB0, 0x00, 0x00, 0x00, 0x00};
+    car_process_frame(0x217, d, 8);
+    TEST_ASSERT_EQ(car_get_speed(), 12050u);
+    TEST_ASSERT_EQ(car_get_taho(), 3500u);
+}
+
+static void test_zero_values(void)
+{
+    car_test_reset();
+    uint8_t d[8] = {0};
+    car_process_frame(0x217, d, 8);
     TEST_ASSERT_EQ(car_get_speed(), 0u);
     TEST_ASSERT_EQ(car_get_taho(), 0u);
+}
 
-#endif /* TODO task 6.1 */
+static void test_short_frame_ignored(void)
+{
+    car_test_reset();
+    /* DLC < 4 — should not modify state */
+    uint8_t d[8] = {0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00};
+    car_process_frame(0x217, d, 3);
+    TEST_ASSERT_EQ(car_get_speed(), 0u);
+    TEST_ASSERT_EQ(car_get_taho(), 0u);
+}
 
-    /* Placeholder: always passes so CI is not broken before implementation */
-    g_test_count++;
-    printf("SKIP: test_decode_speed_rpm (pending task 6.1)\n");
-    return 0;
+int main(void)
+{
+    test_speed_decode();
+    test_rpm_decode();
+    test_speed_and_rpm_combined();
+    test_zero_values();
+    test_short_frame_ignored();
+    return test_runner_result();
 }

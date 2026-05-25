@@ -1,6 +1,6 @@
 # PC Development Emulation Spec
 
-## Overview
+## Purpose
 
 The host build (`CANMOD_TARGET=host`) produces a `canmod-host` binary that runs on x86 Linux using SocketCAN (`vcan0`) as its CAN peripheral. Real captured CAN logs can be replayed through the binary for offline development and regression testing without the vehicle.
 

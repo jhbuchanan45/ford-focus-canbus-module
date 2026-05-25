@@ -19,6 +19,8 @@ The following MS-CAN messages SHALL be decoded by the Ford Focus Mk3 2015 car mo
 ---
 
 ### Requirement: Steering wheel control messages are decoded
+The car module SHALL decode SWC button events from the steering column frame and enqueue them for the Raise output driver.
+
 ⚠ Suspected ID: ~0x1A9. SWC button state for the Ford Focus Mk3 Titanium with SYNC 2.
 
 | Signal | Bit Start | Bit Len | Encoding |
@@ -33,6 +35,8 @@ The following MS-CAN messages SHALL be decoded by the Ford Focus Mk3 2015 car mo
 ---
 
 ### Requirement: Gear selector / reverse signal is decoded
+The car module SHALL decode the gear selector position and expose it via `car_get_selector()`, with reverse (`e_selector_r`) used to trigger the reverse camera and status flag packet.
+
 ⚠ Suspected ID: ~0x165 or ~0x336. Reverse state for camera trigger and status flag packet.
 
 | Signal | Encoding |
@@ -46,6 +50,8 @@ The following MS-CAN messages SHALL be decoded by the Ford Focus Mk3 2015 car mo
 ---
 
 ### Requirement: Vehicle data signals are decoded (GEM-mirrored)
+The car module SHALL decode vehicle speed, engine RPM, coolant temperature, battery voltage, and odometer from GEM-mirrored MS-CAN frames.
+
 ⚠ Suspected IDs: ~0x217 (speed/RPM), ~0x420 (temps). Mirrored to MS-CAN by GEM.
 
 | Message ID | Signal | Scale | Offset | Unit |
@@ -63,6 +69,8 @@ The following MS-CAN messages SHALL be decoded by the Ford Focus Mk3 2015 car mo
 ---
 
 ### Requirement: Door and body status signals are decoded
+The car module SHALL decode all door, tailgate, bonnet, and park brake signals from the BCM door status frame.
+
 ⚠ Suspected ID: ~0x540 (BCM door status).
 
 | Signal | Encoding |
@@ -79,6 +87,8 @@ The following MS-CAN messages SHALL be decoded by the Ford Focus Mk3 2015 car mo
 ---
 
 ### Requirement: Lighting status signals are decoded
+The car module SHALL decode the near-lights state from the BCM lighting frame and expose it via `car_get_near_lights()`.
+
 ⚠ Suspected ID: ~0x4B0 (BCM lighting module). Near-lights state for Raise 0x24 illumination flag.
 
 | Signal | Encoding |
@@ -92,6 +102,8 @@ The following MS-CAN messages SHALL be decoded by the Ford Focus Mk3 2015 car mo
 ---
 
 ### Requirement: HVAC/climate signals are decoded
+The car module SHALL decode all HVAC signals listed below from the FCIM climate frame and expose them via the corresponding `car_get_air_*()` functions.
+
 ⚠ Suspected ID: ~0x3B5 (HVAC module). Climate state for Raise 0x21 AC packet.
 
 | Signal | Encoding |
@@ -113,6 +125,8 @@ The following MS-CAN messages SHALL be decoded by the Ford Focus Mk3 2015 car mo
 ---
 
 ### Requirement: Parking sensor (PDC) distances are decoded
+The car module SHALL decode PDC active state and up to 8 sensor distances from the parking aid module frame and expose them via `car_get_radar()`.
+
 ⚠ Suspected ID: ~0x5C0 (parking aid module). 8 sensor distances (front + rear) for Raise 0x22/0x23 packets. PDC availability at quad-lock must be verified with FORScan — if absent, radar packets are omitted with no impact on other outputs.
 
 | Signal | Encoding |
@@ -128,6 +142,8 @@ The following MS-CAN messages SHALL be decoded by the Ford Focus Mk3 2015 car mo
 ---
 
 ### Requirement: Steering angle is decoded
+The car module SHALL decode the signed steering angle (in degrees × 10) from the EPAS column frame and expose it via `car_get_wheel()`.
+
 ⚠ Suspected ID: ~0x080 (EPAS steering column module). Steering angle for Raise 0x26 packet.
 
 | Signal | Scale | Unit | Range |

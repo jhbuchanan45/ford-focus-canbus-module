@@ -89,8 +89,6 @@ static struct {
     uint8_t count;
 } s_swc;
 
-/* Used by decode_swc() — suppressed until task 6.8 fills in the decode body */
-__attribute__((unused))
 static void swc_enqueue(uint8_t button_id, uint8_t pressed)
 {
     if (s_swc.count == SWC_FIFO_SIZE) {
@@ -116,125 +114,259 @@ int car_swc_dequeue(canmod_swc_event_t *evt)
 }
 
 /* -------------------------------------------------------------------------
- * ⚠ Signal decode helpers — STUB implementations
+ * Signal decode helpers
  *
- * Replace each stub body with real decode logic in task group 6 once the
- * CAN IDs and bit layouts are confirmed from the FORScan capture.
+ * All byte layouts are ⚠ community-researched estimates for the Ford Focus
+ * Mk3 2015 MS-CAN.  Each function is marked with the task that will confirm
+ * or correct the layout via FORScan capture (task 6.x).
+ *
+ * DLC guards prevent reads past the end of short frames.
  * ---------------------------------------------------------------------- */
 
+/**
+ * 0x217 — Speed + RPM  (task 6.1)
+ *
+ * ⚠ Layout (confirm with FORScan):
+ *   d[0..1] big-endian uint16: vehicle speed in 0.01 km/h per bit
+ *           → already in our km/h×100 internal unit
+ *   d[2..3] big-endian uint16: engine RPM in 0.25 RPM per bit
+ *           → rpm = raw >> 2
+ */
 static void decode_speed_rpm(const uint8_t *d, uint8_t dlc)
 {
-    (void)dlc;
-    /* TODO(task 6.1): decode vehicle speed and RPM from CAN_ID_SPEED_RPM.
-     * Suspected layout (⚠ verify with FORScan):
-     *   d[0..1] = raw speed, scale 0.01 km/h/bit → speed_kmh100 = (d[0]<<8|d[1])
-     *   d[2..3] = raw RPM,   scale 0.25 RPM/bit  → rpm = (d[2]<<8|d[3]) / 4
-     */
-    (void)d;
+    if (dlc < 4u) return;
+    s_state.speed = (uint16_t)(((uint16_t)d[0] << 8) | d[1]);
+    s_state.rpm   = (uint16_t)((((uint16_t)d[2] << 8) | d[3]) >> 2);
 }
 
+/**
+ * 0x420 — Coolant temperature  (task 6.1)
+ *
+ * ⚠ d[0]: raw temp byte, offset -40 °C
+ *   temp_c = (int8_t)d[0] - 40
+ *   Range of d[0]: 0 (→ -40°C) to 167 (→ 127°C)
+ */
 static void decode_coolant_temp(const uint8_t *d, uint8_t dlc)
 {
-    (void)dlc;
-    /* TODO(task 6.1): decode coolant temperature from CAN_ID_COOLANT_TEMP.
-     * Suspected: d[0] = raw_temp, offset -40°C → temp_c = d[0] - 40
-     */
-    (void)d;
+    if (dlc < 1u) return;
+    int16_t t = (int16_t)d[0] - 40;
+    /* Clamp to int8_t range for safety */
+    s_state.coolant_temp = (t < -128) ? (int8_t)-128 :
+                           (t >  127) ? (int8_t) 127  : (int8_t)t;
 }
 
+/**
+ * 0x230 — Battery voltage  (task 6.2)
+ *
+ * ⚠ d[0..1] big-endian uint16: voltage in 0.1 V per bit
+ *   voltage_mv = raw × 100
+ *   e.g. 12.6 V → raw = 126 → voltage_mv = 12600
+ */
 static void decode_battery(const uint8_t *d, uint8_t dlc)
 {
-    (void)dlc;
-    /* TODO(task 6.2): decode battery voltage from CAN_ID_BATTERY.
-     * Suspected: d[0..1] = raw_mv, scale 0.1 V/bit → voltage_mv = (d[0]<<8|d[1]) * 100
-     */
-    (void)d;
+    if (dlc < 2u) return;
+    uint16_t raw = (uint16_t)(((uint16_t)d[0] << 8) | d[1]);
+    s_state.voltage_mv = (uint16_t)(raw * 100u);
 }
 
+/**
+ * 0x072 — Odometer  (task 6.2)
+ *
+ * ⚠ d[1..3]: 24-bit big-endian odometer in whole kilometres
+ *   Range: 0 to 16,777,215 km
+ */
 static void decode_odometer(const uint8_t *d, uint8_t dlc)
 {
-    (void)dlc;
-    /* TODO(task 6.2): decode odometer from CAN_ID_ODOMETER. */
-    (void)d;
+    if (dlc < 4u) return;
+    s_state.odometer_km = ((uint32_t)d[1] << 16) |
+                          ((uint32_t)d[2] <<  8) |
+                           (uint32_t)d[3];
 }
 
+/**
+ * 0x540 — Door / body / park brake status  (task 6.3)
+ *
+ * ⚠ d[0] bit-field:
+ *   bit 0 = door_fl
+ *   bit 1 = door_fr
+ *   bit 2 = door_rl
+ *   bit 3 = door_rr
+ *   bit 4 = tailgate (boot lid)
+ *   bit 5 = bonnet (hood)
+ *   bit 6 = park brake engaged
+ */
 static void decode_doors(const uint8_t *d, uint8_t dlc)
 {
-    (void)dlc;
-    /* TODO(task 6.3): decode door / body / park-brake status from CAN_ID_DOORS.
-     * Suspected: d[0] bit-field
-     *   bit0=door_fl, bit1=door_fr, bit2=door_rl, bit3=door_rr,
-     *   bit4=tailgate, bit5=bonnet, bit6=park_brake
-     */
-    (void)d;
+    if (dlc < 1u) return;
+    s_state.door_fl    = (d[0] >> 0) & 1u;
+    s_state.door_fr    = (d[0] >> 1) & 1u;
+    s_state.door_rl    = (d[0] >> 2) & 1u;
+    s_state.door_rr    = (d[0] >> 3) & 1u;
+    s_state.tailgate   = (d[0] >> 4) & 1u;
+    s_state.bonnet     = (d[0] >> 5) & 1u;
+    s_state.park_brake = (d[0] >> 6) & 1u;
 }
 
+/**
+ * 0x4B0 — Lighting status  (task 6.4)
+ *
+ * ⚠ d[0] bit 0: near lights on (sidelights or headlights)
+ */
 static void decode_lighting(const uint8_t *d, uint8_t dlc)
 {
-    (void)dlc;
-    /* TODO(task 6.4): decode near-lights status from CAN_ID_LIGHTING. */
-    (void)d;
+    if (dlc < 1u) return;
+    s_state.near_lights = (d[0] >> 0) & 1u;
 }
 
+/**
+ * 0x165 — Gear selector  (task 6.5)
+ *
+ * ⚠ d[0]: gear position byte
+ *   0x00 = P (park / default)
+ *   0x01 = R (reverse)
+ *   0x02 = N (neutral)
+ *   0x03+ = D (drive or sport/manual modes)
+ *
+ * Ford PowerShift may use different nibble encoding — verify with FORScan.
+ */
 static void decode_gear_selector(const uint8_t *d, uint8_t dlc)
 {
-    (void)dlc;
-    /* TODO(task 6.5): decode gear selector / reverse from CAN_ID_GEAR_SELECTOR. */
-    (void)d;
+    if (dlc < 1u) return;
+    switch (d[0]) {
+    case 0x01: s_state.selector = e_selector_r; break;
+    case 0x02: s_state.selector = e_selector_n; break;
+    case 0x03: s_state.selector = e_selector_d; break;
+    case 0x00:
+    default:   s_state.selector = e_selector_p; break;
+    }
 }
 
+/**
+ * 0x3B5 — HVAC / climate  (task 6.6)
+ *
+ * ⚠ Layout (confirm with FORScan; reference: 3B5#0300002B00000000):
+ *   d[0] bit 0 = AC compressor on
+ *   d[0] bit 1 = recirculation
+ *   d[0] bit 2 = dual zone active
+ *   d[1] bits 3..0 = fan speed raw (0–15) → Raise 0–7 (divide by 2)
+ *   d[2] = driver setpoint temperature (°C × 2)
+ *   d[3] = passenger setpoint temperature (°C × 2)
+ *   d[4] bit 0 = windscreen vent
+ *   d[4] bit 1 = middle vents
+ *   d[4] bit 2 = floor vents
+ */
 static void decode_hvac(const uint8_t *d, uint8_t dlc)
 {
-    (void)dlc;
-    /* TODO(task 6.6): decode HVAC state from CAN_ID_HVAC (0x3B5).
-     * Known reference signal: cansend vcan0 3B5#0300002B00000000
-     * Suspected layout (⚠ verify):
-     *   d[0] bit2 = ac_on
-     *   d[1]      = fan_speed raw (0–15), Raise scale = raw / 2
-     *   d[2]      = driver_temp × 2
-     *   d[3]      = passenger_temp × 2
-     *   d[0] bit0 = recirculation
-     *   d[4] bits = airflow
-     *   d[0] bit1 = dual_zone
-     */
-    (void)d;
+    if (dlc < 4u) return;
+    s_state.ac_on         = (d[0] >> 0) & 1u;
+    s_state.recirculation = (d[0] >> 1) & 1u;
+    s_state.dual_zone     = (d[0] >> 2) & 1u;
+    s_state.fan_speed     = (d[1] & 0x0Fu) >> 1u;  /* 0–15 raw → 0–7 Raise */
+    s_state.temp_driver   = d[2];
+    s_state.temp_pass     = d[3];
+    if (dlc >= 5u) {
+        s_state.air_wind   = (d[4] >> 0) & 1u;
+        s_state.air_middle = (d[4] >> 1) & 1u;
+        s_state.air_floor  = (d[4] >> 2) & 1u;
+    }
 }
 
+/**
+ * 0x080 — EPAS steering angle  (task 6.7)
+ *
+ * ⚠ d[0..1]: signed int16 big-endian, scale 0.1 deg per bit
+ *   → already matches our internal unit (deg × 10)
+ *   Range: -5400 to +5400 (±540°)
+ */
 static void decode_steering(const uint8_t *d, uint8_t dlc)
 {
-    (void)dlc;
-    /* TODO(task 6.7): decode steering angle from CAN_ID_EPAS_STEERING.
-     * Suspected: d[0..1] signed int16, scale 0.1 deg/bit → wheel = (int16)((d[0]<<8)|d[1])
-     */
-    (void)d;
+    if (dlc < 2u) return;
+    s_state.wheel = (int16_t)(((uint16_t)d[0] << 8) | d[1]);
+}
+
+/**
+ * 0x5C0 — PDC parking sensor distances  (task 6.9)
+ *
+ * ⚠ Verify PDC is present on quad-lock MS-CAN before relying on this.
+ *
+ * Suspected layout:
+ *   d[0] bit 0: sensors active (1 = on, 0 = off/inactive)
+ *   d[1..4]: rear sensors RL, RLM, RRM, RR
+ *   d[5..8]: front sensors FL, FLM, FRM, FR (if 8-sensor variant)
+ *
+ * Ford distance zone encoding (⚠ verify):
+ *   0 = no obstacle (clear)  → our RADAR_DIST_CLEAR (99)
+ *   1 = farthest zone        → our ~84
+ *   ...
+ *   6 = closest zone (<20cm) → our ~0
+ *
+ * Conversion: ford 0 → 99; ford n (1-6) → (6-n) × 14
+ */
+static uint8_t pdc_zone_to_dist(uint8_t zone)
+{
+    if (zone == 0u) return RADAR_DIST_CLEAR;
+    if (zone > 6u)  zone = 6u;
+    return (uint8_t)((6u - zone) * 14u);
 }
 
 static void decode_pdc(const uint8_t *d, uint8_t dlc)
 {
-    (void)dlc;
-    /* TODO(task 6.9): decode PDC distances from CAN_ID_PDC.
-     * ⚠ Verify PDC is present on quad-lock (task 1.2) before implementing.
-     */
-    (void)d;
+    if (dlc < 1u) return;
+    s_state.radar.state = ((d[0] & 1u) != 0u) ? e_radar_on : e_radar_off;
+
+    /* Rear sensors: d[1..4] */
+    for (uint8_t i = 0u; i < 4u; i++) {
+        s_state.radar.dist[i] = ((uint8_t)(i + 1u) < dlc)
+                                ? pdc_zone_to_dist(d[i + 1u])
+                                : RADAR_DIST_CLEAR;
+    }
+    /* Front sensors: d[5..8] */
+    for (uint8_t i = 0u; i < 4u; i++) {
+        s_state.radar.dist[4u + i] = ((uint8_t)(i + 5u) < dlc)
+                                     ? pdc_zone_to_dist(d[i + 5u])
+                                     : RADAR_DIST_CLEAR;
+    }
+}
+
+/**
+ * 0x1A9 — Steering wheel controls  (task 6.8)
+ *
+ * ⚠ Layout (confirm with FORScan):
+ *   d[0]: Ford button code (0x00 = no button)
+ *   d[1]: 0x01 = pressed, 0x00 = released
+ *
+ * Ford → Raise button ID mapping (⚠ verify raw values with FORScan):
+ *   0x01 → VOL_UP    0x02 → VOL_DOWN
+ *   0x04 → NEXT      0x08 → PREV
+ *   0x10 → MODE      0x20 → MUTE
+ *   0x40 → ANSWER    0x80 → HANGUP
+ */
+static uint8_t ford_swc_to_raise(uint8_t btn)
+{
+    switch (btn) {
+    case 0x01: return RAISE_SWC_VOL_UP;
+    case 0x02: return RAISE_SWC_VOL_DOWN;
+    case 0x04: return RAISE_SWC_NEXT;
+    case 0x08: return RAISE_SWC_PREV;
+    case 0x10: return RAISE_SWC_MODE;
+    case 0x20: return RAISE_SWC_MUTE;
+    case 0x40: return RAISE_SWC_ANSWER;
+    case 0x80: return RAISE_SWC_HANGUP;
+    default:   return 0u;
+    }
 }
 
 static void decode_swc(const uint8_t *d, uint8_t dlc)
 {
-    (void)dlc;
-    /* TODO(task 6.8): map Ford SWC byte values to Raise button IDs.
-     * ⚠ Verify actual byte values with FORScan (task 1.2).
-     *
-     * Suspected layout:
-     *   d[0] = button_raw (0x00 = none)
-     *   d[1] = state (0x01 = press, 0x00 = release)
-     *
-     * Example mapping (UNVERIFIED — fill in real values after FORScan):
-     *   0x01 → RAISE_SWC_VOL_UP
-     *   0x02 → RAISE_SWC_VOL_DOWN
-     *   0x04 → RAISE_SWC_NEXT
-     *   0x08 → RAISE_SWC_PREV
-     */
-    (void)d;
+    if (dlc < 2u) return;
+    uint8_t btn_raw = d[0];
+    uint8_t pressed = d[1] & 1u;
+
+    if (btn_raw == 0u) return;         /* no button active */
+    uint8_t raise_id = ford_swc_to_raise(btn_raw);
+    if (raise_id == 0u) return;        /* unmapped button — ignore */
+
+    swc_enqueue(raise_id, pressed);
 }
 
 /* -------------------------------------------------------------------------
