@@ -83,7 +83,10 @@ CANMOD_PID=$!
 sleep 0.2
 
 echo "[replay] Replaying: $LOG"
-canplayer -I "$LOG" -l 1 vcan0=can0 2>/dev/null || true
+# Map frames from log's source interface to our target interface.
+# Covers both real-hw captures (can0) and vcan captures (vcan0).
+canplayer -I "$LOG" "$IFACE=can0" 2>/dev/null || \
+canplayer -I "$LOG" "$IFACE=$IFACE" 2>/dev/null || true
 
 sleep 0.3  # allow last frames to be processed
 

@@ -76,7 +76,7 @@
 ## 10. Documentation and Spec Sync
 
 - [ ] 10.1 Update `openspec/changes/ford-focus-canbus-decoder/specs/canbus/spec.md` with all confirmed MS-CAN IDs (replacing ⚠ placeholders) based on Tasks 1.2 and 9.2 findings.
-- [ ] 10.2 Add `docs/hardware-setup.md` covering: breadboard wiring diagram, quad-lock pin tap, TJA1042 connections, power supply, and USB-UART for debug.
-- [ ] 10.3 Add `docs/dev-workflow.md` covering: WSL2 setup, vcan0 creation, replay commands, building ARM and host targets, flashing with ST-Link.
-- [ ] 10.4 Add `tools/replay.sh` convenience script: creates vcan0, runs canplayer on a log file, and pipes output to `canmod-host`.
+- [x] 10.2 Add `docs/hardware-setup.md` covering: breadboard wiring diagram, quad-lock pin tap, TJA1042 connections, power supply, and USB-UART for debug.
+- [x] 10.3 Add `docs/dev-workflow.md` covering: WSL2 setup, vcan0 creation, replay commands, building ARM and host targets, flashing with ST-Link.
+- [x] 10.4 Add `tools/replay.sh` convenience script: creates vcan0, runs canplayer on a log file, and pipes output to `canmod-host`.
 - [ ] 10.5 Archive this change: run `/opsx:archive` — sync delta specs to main `openspec/specs/` and move to archive.
