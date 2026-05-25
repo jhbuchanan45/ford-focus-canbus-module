@@ -23,3 +23,22 @@ jobs:
 
       - name: Validate specs and changes
         run: openspec validate --all --no-interactive
+
+      - name: Check for completed but unarchived changes
+        run: |
+          completed=$(openspec list --json | python3 -c "
+          import sys, json
+          d = json.load(sys.stdin)
+          done = [c['name'] for c in d['changes']
+                  if c['completedTasks'] == c['totalTasks'] and c['totalTasks'] > 0]
+          if done:
+              print('\n'.join(done))
+          ")
+          if [ -n "$completed" ]; then
+            echo "❌ The following changes have all tasks complete but are not archived:"
+            echo "$completed" | sed 's/^/   - /'
+            echo ""
+            echo "Run /opsx:archive <name> (or 'openspec archive <name>') to archive them."
+            exit 1
+          fi
+          echo "✓ No completed unarchived changes."
