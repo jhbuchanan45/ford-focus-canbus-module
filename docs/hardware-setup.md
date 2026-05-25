@@ -11,10 +11,10 @@ Covers the physical build for connecting an STM32F103C8T6 (Blue Pill) to the For
 | STM32F103C8T6 (Blue Pill) | £2–3 aliexpress/amazon; confirm `C8T6` not counterfeit |
 | TJA1042T/3 CAN transceiver | 3.3 V tolerant, SPI-free; NXP or clone |
 | 120 Ω resistor (0.25 W) | Only if bus termination test shows ~120 Ω (see §Bus Termination) |
-| 3.3 V LDO (e.g. AMS1117-3.3) | Or MP2307 buck if power dissipation matters |
+| 3.3 V LDO (e.g. AMS1117-3.3) | Only needed if ATOTO 8-pin power pin reads 12 V |
 | CP2102 / CH340 USB-UART adapter | For USART1 debug output (115200 baud) |
-| Ford quad-lock breakout / patch cable | Expose pins without cutting OEM loom |
-| Breadboard + jumper wires | 170pt mini-breadboard fits in dash cavity |
+| T-tap / insulation piercing connectors × 4 | Tap CAN H/L, ACC, GND from harness without cutting |
+| Breadboard + jumper wires | 400pt breadboard recommended |
 
 ---
 
@@ -52,7 +52,65 @@ Before first power-on, measure the termination resistance across MS-CAN H/L **wi
 
 ---
 
-## Wiring Diagram
+## Wiring Diagram — Option A: RZ-FD09 harness tap (recommended)
+
+Use this if you have the existing RZ-FD09 / quad-lock harness adapter already fitted.
+The Blue Pill **replaces** the RZ-FD09 box — tap 4 wires from the 10-pin harness
+connector, and connect UART output to the same ATOTO 8-pin socket the RZ-FD09 used.
+
+```
+ RZ-FD09 10-pin harness connector (loom side — T-tap, do not cut)
+ ┌──────────────────────────────────┐
+ │ Teal  (MS-CAN H) ────────────────┼──── CANH ─────────────────────┐
+ │ White (MS-CAN L) ────────────────┼──── CANL ──────────────────┐  │
+ │ Red   (ACC +12V) ────────────────┼──┐                         │  │
+ │ Black (GND)      ────────────────┼──┼──┐                      │  │
+ │ Pink  (Reverse)  ─── (optional) ─┼──┼──┼──► Blue Pill GPIO   │  │
+ │ (remaining 5 wires: leave alone) │  │  │                      │  │
+ └──────────────────────────────────┘  │  │                      │  │
+                                       │  │   ┌──────────────────┼──┼──────┐
+                          ┌────────────┘  │   │  TJA1042         │  │      │
+                          │  Power path   │   │  ┌────────────┐  │  │      │
+                          │               │   │  │ CANH (p7) ◄┼──┘  │      │
+                          ▼               │   │  │ CANL (p6) ◄┼─────┘      │
+              ┌─────────────────┐         │   │  │ RXD  (p4) ──────────► PB8│
+              │  ATOTO 8-pin    │         │   │  │ TXD  (p1) ◄──────────  PB9│
+              │  (replaces      │         │   │  │ VCC  (p3) ◄── 3V3         │
+              │   RZ-FD09 plug) │         │   │  │ STB  (p8) ── GND          │
+              │                 │         │   │  │ GND  (p2) ── GND          │
+              │ 5V / 3V3 ───────┼─────────┘◄──┘  └───────────────────────────┘
+              │ GND    ─────────┼───────────────────────────────── GND        │
+              │ UART-RX ────────┼───────────────────────────────── PA2 (TX)   │
+              │ UART-TX ────────┼───────────────────────────────── PA3 (RX)   │
+              └─────────────────┘                              (STM32F103)    │
+                                                                               │
+ USB-UART debug adapter (optional, bench use)                                  │
+ ┌──────────────────┐                                                          │
+ │ RX ◄─────────────┼──────────────────────────────────────────── PA9  (TX)  │
+ │ TX ──────────────┼──────────────────────────────────────────── PA10 (RX)  │
+ │ GND ─────────────┼──────────────────────────────────────────── GND        │
+ └──────────────────┘                                                          │
+                                                                               │
+ USB-C / USB-A (Phase 1 JSON log — laptop during development)                  │
+ └──────────────────────────────────────────────────────────────── PA11/PA12  │
+                                                                    (USB CDC)  │
+                                                                               │
+ PC13 (onboard LED) ── heartbeat blink ─────────────────────────────────────┘
+```
+
+### Power: read voltage on ATOTO 8-pin power pin first
+
+| ATOTO power pin reads | Connect to Blue Pill | LDO needed? |
+|-----------------------|----------------------|-------------|
+| **5 V** | `5V` pin (uses onboard LDO) | No |
+| **3.3 V** | `3V3` pin (bypasses onboard LDO) | No |
+| **12 V** | Via AMS1117-3.3 → `3V3` pin | Yes |
+
+---
+
+## Wiring Diagram — Option B: Direct quad-lock (no existing harness)
+
+Use this if you are wiring directly to the quad-lock connector without the RZ-FD09 harness.
 
 ```
  Quad-lock A-block
@@ -65,46 +123,57 @@ Before first power-on, measure the termination resistance across MS-CAN H/L **wi
                          │    +12V ──► AMS1117-3.3 ──► 3V3 ──► VCC   │
                          └───────────────────────────────── GND ──► GND│
                                                                         │
- ATOTO 8-pin harness                                                     │
- ┌──────────────────┐                                                    │
- │ CAN-RX           │◄──────────────────────────────── PA2 (USART2 TX) │
- │ CAN-TX           │──────────────────────────────── PA3 (USART2 RX)  │
- │ GND              │──────────────────────────────── GND               │
- └──────────────────┘                                         (Blue Pill)│
-                                                                         │
- USB-UART debug (optional)                                               │
- ┌──────────────────┐                                                    │
- │ RX               │◄──────────────────────────────── PA9 (USART1 TX) │
- │ TX               │──────────────────────────────── PA10 (USART1 RX)  │
- │ GND              │──────────────────────────────── GND               │
- └──────────────────┘                                                    │
-                                                                         │
- USB-CDC (Phase 1 JSON log)                                              │
- └─────────────────────────────────────────────────────── PA11/PA12 (USB)┘
+ ATOTO 8-pin harness                                                    │
+ ┌──────────────────┐                                                   │
+ │ CAN-RX           │◄──────────────────────────────── PA2 (USART2 TX)│
+ │ CAN-TX           │──────────────────────────────── PA3 (USART2 RX) │
+ │ GND              │──────────────────────────────── GND              │
+ └──────────────────┘                                        (Blue Pill)│
+                                                                        │
+ USB-UART debug (optional)                                              │
+ ┌──────────────────┐                                                   │
+ │ RX               │◄──────────────────────────────── PA9 (USART1 TX)│
+ │ TX               │──────────────────────────────── PA10 (USART1 RX) │
+ │ GND              │──────────────────────────────── GND              │
+ └──────────────────┘                                                   │
+                                                                        │
+ USB-CDC (Phase 1 JSON log)                                             │
+ └────────────────────────────────────────────────────── PA11/PA12 (USB)┘
 ```
 
 ### TJA1042 Connections
 
-| TJA1042 Pin | Connect to |
-|-------------|-----------|
-| VCC (pin 3) | 3.3 V |
-| GND (pin 2) | GND |
-| TXD (pin 1) | STM32 PB9 (CAN1_TX, remapped) |
-| RXD (pin 4) | STM32 PB8 (CAN1_RX, remapped) |
-| CANH (pin 7) | MS-CAN H (quad-lock A9) |
-| CANL (pin 6) | MS-CAN L (quad-lock A10) |
-| STB (pin 8) | GND (normal mode; pull high for standby) |
+| TJA1042 Pin | Signal | Connect to |
+|-------------|--------|-----------|
+| 1 — TXD | MCU → CAN | Blue Pill PB9 (CAN1_TX, remapped) |
+| 2 — GND | Ground | GND |
+| 3 — VCC | Power | 3.3 V (Blue Pill 3V3 pin) |
+| 4 — RXD | CAN → MCU | Blue Pill PB8 (CAN1_RX, remapped) |
+| 5 — VREF | Ref (unused) | Leave unconnected |
+| 6 — CANL | CAN bus L | MS-CAN L (teal wire, harness) |
+| 7 — CANH | CAN bus H | MS-CAN H (white wire, harness) |
+| 8 — STB | Standby (active high) | GND (always-on normal mode) |
 
 > The STM32F103 CAN1 peripheral is remapped to PB8/PB9 in firmware (`AFIO_MAPR_CAN1_REMAP_PORTB`). PA11/PA12 are used for USB CDC and must not be used for CAN.
+
+> ⚠ **CAN H/L wire colours assumed from RZ-FD09 harness convention — verify with multimeter before first power-on** (CAN H ≈ 2.5–3.5 V, CAN L ≈ 1.5–2.5 V, measured to GND with ignition on).
 
 ---
 
 ## Power Supply
 
-- **Input:** +12 V ACC from quad-lock A3 (switched with ignition)
-- **Regulator:** AMS1117-3.3 LDO (TO-92 or SOT-223). Add 10 µF + 100 nF decoupling on output.
-- **Current draw:** ~80 mA typical (Blue Pill + TJA1042)
-- **Alternative:** If fitting into a warm enclosure, consider a small buck converter (e.g. MP2307) to reduce heat.
+**Option A — from ATOTO 8-pin (preferred, no extra parts):**
+Measure the power pin on the ATOTO CAN box 8-pin connector while the head unit is on.
+- **5 V measured** → connect to Blue Pill `5V` pin. Onboard AMS1117-3.3 regulates to 3.3 V.
+- **3.3 V measured** → connect to Blue Pill `3V3` pin directly. No LDO needed.
+- **12 V measured** → use Option B below.
+
+**Option B — from ACC wire (fallback):**
+- **Input:** +12 V ACC (red wire on RZ-FD09 harness / quad-lock A3)
+- **Regulator:** AMS1117-3.3 LDO. Add 10 µF + 100 nF decoupling capacitors on the output.
+- Connect LDO output to Blue Pill `3V3` pin.
+
+**Current draw:** ~80 mA typical (Blue Pill + TJA1042). Both ATOTO supply and ACC LDO handle this easily.
 
 ---
 
@@ -124,14 +193,24 @@ The ATOTO S8 MS exposes a CAN box header (8-pin). The relevant signals:
 
 ## First Power-On Checklist
 
-1. ☐ Confirm +12 V ACC present on A3 with ignition on
-2. ☐ Confirm GND continuity between A4 and chassis
-3. ☐ Bus termination measured (see §Bus Termination)
-4. ☐ 3.3 V present on Blue Pill VCC rail before connecting CAN/UART
-5. ☐ PC13 LED blinks at 1 Hz (heartbeat) — confirms firmware running
-6. ☐ USB CDC enumerated — open terminal at 115200 (Phase 1 only)
-7. ☐ JSON lines appear in terminal on ignition-on
-8. ☐ ATOTO set to correct Raise profile; USART2 wired to ATOTO harness
+### Before wiring
+1. ☐ Measure ATOTO 8-pin power pin voltage — note 5 V or 3.3 V (determines power path)
+2. ☐ Back-probe RZ-FD09 harness 10-pin: confirm teal ≈ 2.5–3.5 V (CAN H), white ≈ 1.5–2.5 V (CAN L) with ignition on
+3. ☐ Bus termination measured across teal/white with ignition off (see §Bus Termination)
+
+### Bench test (before fitting in car)
+4. ☐ Power Blue Pill from USB — PC13 LED blinks 1 Hz (heartbeat confirms firmware)
+5. ☐ USB CDC enumerated on laptop — serial terminal shows JSON lines when CAN frames injected via vcan0
+
+### In car — Phase 1 (JSON)
+6. ☐ 3.3 V present on Blue Pill VCC rail with ignition on (measure at `3V3` pin)
+7. ☐ JSON lines appear in USB terminal within 2 seconds of ignition-on
+8. ☐ Speed, RPM, door status values match real car state
+
+### In car — Phase 2 (Raise)
+9. ☐ ATOTO set to **Raise VW PQ** protocol in CAN box settings
+10. ☐ USART2 TX (PA2) wired to ATOTO 8-pin UART-RX pin
+11. ☐ Steering wheel Vol+/Vol− controls ATOTO volume
 
 ---
 
