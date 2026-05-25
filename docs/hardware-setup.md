@@ -61,28 +61,38 @@ connector, and connect UART output to the same ATOTO 8-pin socket the RZ-FD09 us
 ```
  RZ-FD09 10-pin harness connector (loom side — T-tap, do not cut)
  ┌──────────────────────────────────┐
- │ Teal  (MS-CAN H) ────────────────┼──── CANH ─────────────────────┐
- │ White (MS-CAN L) ────────────────┼──── CANL ──────────────────┐  │
- │ Red   (ACC +12V) ────────────────┼──┐                         │  │
- │ Black (GND)      ────────────────┼──┼──┐                      │  │
- │ Pink  (Reverse)  ─── (optional) ─┼──┼──┼──► Blue Pill GPIO   │  │
- │ (remaining 5 wires: leave alone) │  │  │                      │  │
- └──────────────────────────────────┘  │  │                      │  │
-                                       │  │   ┌──────────────────┼──┼──────┐
-                          ┌────────────┘  │   │  TJA1042         │  │      │
-                          │  Power path   │   │  ┌────────────┐  │  │      │
-                          │               │   │  │ CANH (p7) ◄┼──┘  │      │
-                          ▼               │   │  │ CANL (p6) ◄┼─────┘      │
-              ┌─────────────────┐         │   │  │ RXD  (p4) ──────────► PB8│
-              │  ATOTO 8-pin    │         │   │  │ TXD  (p1) ◄──────────  PB9│
-              │  (replaces      │         │   │  │ VCC  (p3) ◄── 3V3         │
-              │   RZ-FD09 plug) │         │   │  │ STB  (p8) ── GND          │
-              │                 │         │   │  │ GND  (p2) ── GND          │
-              │ 5V / 3V3 ───────┼─────────┘◄──┘  └───────────────────────────┘
-              │ GND    ─────────┼───────────────────────────────── GND        │
-              │ UART-RX ────────┼───────────────────────────────── PA2 (TX)   │
-              │ UART-TX ────────┼───────────────────────────────── PA3 (RX)   │
-              └─────────────────┘                              (STM32F103)    │
+ │ Teal  (MS-CAN H) ────────────────┼──── CANH ──────────────────────┐
+ │ White (MS-CAN L) ────────────────┼──── CANL ───────────────────┐  │
+ │ Black (GND)      ────────────────┼────────────────────────┐    │  │
+ │ Pink  (Reverse)  ─── (optional) ─┼──► Blue Pill GPIO      │    │  │
+ │ (remaining 6 wires: leave alone) │                         │    │  │
+ └──────────────────────────────────┘                         │    │  │
+                                         ┌───────────────────┼────┼──┼──────┐
+                                         │  TJA1042          │    │  │      │
+                                         │  ┌─────────────┐  │    │  │      │
+                                         │  │ CANH (p7)  ◄┼──┼────┘  │      │
+                                         │  │ CANL (p6)  ◄┼──┼───────┘      │
+                                         │  │ RXD  (p4) ──┼──┼──────────► PB8│
+                                         │  │ TXD  (p1)  ◄┼──┼────────────  PB9│
+                                         │  │ VCC  (p3)  ◄┼──┼────── 3V3       │
+                                         │  │ STB  (p8) ──┼──┼────── GND       │
+                                         │  │ GND  (p2)  ◄┼──┤                 │
+                                         │  └─────────────┘  │    STM32F103    │
+                                         └───────────────────┘                 │
+                                                              │                 │
+ ATOTO spare CarPlay USB port                                 │                 │
+ ┌───────────────────────────┐                               │                 │
+ │ USB 5V ────────────────── ┼───────────────────────────────┼──► USB port    │
+ │ USB GND ───────────────── ┼───────────────────────────────┤   (onboard LDO │
+ └───────────────────────────┘                               │   → 3.3V)      │
+   Phase 1: use laptop USB instead for JSON log              │                 │
+                                                             │                 │
+ ATOTO 8-pin CAN socket (replaces RZ-FD09 plug)             │                 │
+ ┌─────────────────┐                                         │                 │
+ │ UART-RX ────────┼─────────────────────────────────────────┼── PA2 (TX)     │
+ │ UART-TX ────────┼─────────────────────────────────────────┼── PA3 (RX)     │
+ │ GND     ────────┼─────────────────────────────────────────┘                │
+ └─────────────────┘                                                           │
                                                                                │
  USB-UART debug adapter (optional, bench use)                                  │
  ┌──────────────────┐                                                          │
@@ -91,20 +101,23 @@ connector, and connect UART output to the same ATOTO 8-pin socket the RZ-FD09 us
  │ GND ─────────────┼──────────────────────────────────────────── GND        │
  └──────────────────┘                                                          │
                                                                                │
- USB-C / USB-A (Phase 1 JSON log — laptop during development)                  │
- └──────────────────────────────────────────────────────────────── PA11/PA12  │
-                                                                    (USB CDC)  │
-                                                                               │
- PC13 (onboard LED) ── heartbeat blink ─────────────────────────────────────┘
+ PC13 (onboard LED) ── heartbeat 1 Hz blink ───────────────────────────────┘
 ```
 
-### Power: read voltage on ATOTO 8-pin power pin first
+> See [`wiring-diagram.svg`](./wiring-diagram.svg) for the visual schematic.
 
-| ATOTO power pin reads | Connect to Blue Pill | LDO needed? |
-|-----------------------|----------------------|-------------|
-| **5 V** | `5V` pin (uses onboard LDO) | No |
-| **3.3 V** | `3V3` pin (bypasses onboard LDO) | No |
-| **12 V** | Via AMS1117-3.3 → `3V3` pin | Yes |
+### Power via ATOTO CarPlay USB (no LDO required)
+
+The spare CarPlay USB port on the ATOTO provides 5 V. Connect a USB cable from that
+port to the Blue Pill's USB connector. The Blue Pill's onboard AMS1117-3.3 regulates
+5 V → 3.3 V for the MCU and TJA1042.
+
+| Phase | USB connected to | Purpose |
+|-------|-----------------|---------|
+| Phase 1 (development) | Laptop / PC | Power + JSON serial log |
+| Phase 2 (installed) | ATOTO CarPlay USB port | Power only (data unused) |
+
+**Only 3 wires needed from the harness: CAN H, CAN L, GND.**
 
 ---
 
