@@ -1,6 +1,6 @@
 # Raise VW PQ Output Driver Spec
 
-## Overview
+## Purpose
 
 The Raise output driver (`src/output/raise.c`) implements the Raise VW PQ UART protocol at 38400 baud 8N1 for the ATOTO S8 MS head unit. It reads vehicle state exclusively via the `car_get_*` API and produces nine packet types.
 
@@ -28,6 +28,7 @@ All packets SHALL use the framing above. Checksum SHALL be computed over CMD, LE
 ---
 
 ### Requirement: All nine Raise packet types are implemented
+The raise driver SHALL implement all nine packet types listed below using the packet format defined above.
 
 #### 0x20 — SWC button event
 - DATA: `[button_id, pressed]` (2 bytes)
@@ -98,6 +99,11 @@ The driver SHALL parse incoming 0x2E-framed packets from the ATOTO head unit and
 ---
 
 ### Requirement: Packet transmission is periodic and event-driven
+The raise driver SHALL transmit each packet type at the rate or trigger listed below.
+
+#### Scenario: Periodic packets sent at correct intervals
+- **WHEN** the main loop runs continuously
+- **THEN** vehicle info, doors, warnings, status, and AC packets are sent every 500 ms; steering and radar packets are sent every 100 ms
 
 | Packet | Trigger |
 |--------|---------|

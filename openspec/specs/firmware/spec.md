@@ -1,6 +1,6 @@
 # Firmware Architecture Spec
 
-## Overview
+## Purpose
 
 Portable, layered firmware for decoding Ford Focus Mk3 MS-CAN frames on an STM32F103C8T6 and outputting the Raise VW PQ protocol to an ATOTO S8 MS head unit. The firmware is chip-agnostic at the Car Module and Output Driver layers; only the HAL is MCU-specific.
 
@@ -77,7 +77,7 @@ lib/
 └── libopencm3/                   # Git submodule (ARM target only)
 ```
 
-## Build System
+## Requirements
 
 ### Requirement: Build system supports ARM and x86 host targets via CMake
 The project SHALL use CMake with two toolchain files: `cmake/toolchain-arm.cmake` (arm-none-eabi-gcc, Cortex-M3) and `cmake/toolchain-host.cmake` (gcc for x86). Output driver is selected via `-DCANMOD_OUTPUT=json|raise`. Target is selected via `-DCANMOD_TARGET=stm32f1|host`.

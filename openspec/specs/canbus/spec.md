@@ -1,12 +1,23 @@
 # CAN Bus Signal Spec — Ford Focus Mk3 2015 (MS-CAN)
 
-## Overview
+## Purpose
 
 Defines the MS-CAN message IDs and byte-level signal definitions for the Ford Focus Mk3 2015 Titanium decoded by this firmware.
 
 **Only MS-CAN (125 kbps) is used.** MS-CAN is accessed via the quad-lock connector (pins A9 H / A10 L). HS-CAN (500 kbps) is not connected. Powertrain signals (speed, RPM, temperature) that live natively on HS-CAN are available on MS-CAN as copies mirrored by the GEM gateway module.
 
 All IDs and byte layouts below are **⚠ community-researched estimates**. Each is marked for confirmation via FORScan capture on the target vehicle (task 1.2). Update the ⚠ markers and correct any wrong fields once confirmed.
+
+---
+
+## Requirements
+
+### Requirement: All eleven MS-CAN message IDs are decoded by the car module
+The car module SHALL decode all eleven MS-CAN message IDs listed below. All byte layouts are community-researched estimates marked ⚠ until verified against FORScan capture on the target vehicle.
+
+#### Scenario: Known frame decoded and state updated
+- **WHEN** a valid CAN frame is received for any of the eleven IDs listed below
+- **THEN** the car module updates the corresponding internal signal state within one main loop tick
 
 ---
 

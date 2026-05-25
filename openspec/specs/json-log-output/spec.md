@@ -1,6 +1,6 @@
 # JSON Log Output Driver Spec
 
-## Overview
+## Purpose
 
 The JSON log output driver (`src/output/json_log.c`) emits newline-delimited JSON (NDJSON) over USB CDC for Phase 1 development and signal verification. It is selected at compile time via `-DCANMOD_OUTPUT=json` and is mutually exclusive with the Raise driver.
 
@@ -25,6 +25,11 @@ Format:
 ---
 
 ### Requirement: Signal field names and scaling are consistent with car.h conventions
+JSON output fields SHALL use the exact names and scaling defined in the table below, derived from `car_get_*` return values.
+
+#### Scenario: Speed field emitted with correct scaling
+- **WHEN** a 0x217 frame is received with vehicle speed 5000 (50.00 km/h × 100)
+- **THEN** the emitted JSON contains `"speed_kmh":50.00`
 
 | CAN ID | JSON field | Source | Scale |
 |--------|-----------|--------|-------|
@@ -55,9 +60,11 @@ The `ts` field SHALL be a monotonic uint32 millisecond counter from `hw_tick_get
 ---
 
 ### Requirement: JSON build and Raise build are mutually exclusive
-`CANMOD_OUTPUT=json` enables `json_log.c` and defines `CANMOD_OUTPUT_JSON=1`.
-`CANMOD_OUTPUT=raise` enables `raise.c` and defines `CANMOD_OUTPUT_RAISE=1`.
-Both SHALL NOT be compiled into the same binary.
+The build system SHALL compile exactly one output driver per binary. `CANMOD_OUTPUT=json` enables `json_log.c` and defines `CANMOD_OUTPUT_JSON=1`. `CANMOD_OUTPUT=raise` enables `raise.c` and defines `CANMOD_OUTPUT_RAISE=1`. Both SHALL NOT be compiled into the same binary.
+
+#### Scenario: Only one output driver compiled per build
+- **WHEN** `cmake` is invoked with `-DCANMOD_OUTPUT=json`
+- **THEN** `raise.c` is not compiled and `CANMOD_OUTPUT_RAISE` is not defined
 
 ---
 

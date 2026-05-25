@@ -1,6 +1,6 @@
 # MS-CAN Input Spec
 
-## Overview
+## Purpose
 
 Defines how the firmware receives and dispatches MS-CAN frames. The CAN peripheral is initialised once at boot; all frame handling is interrupt- or poll-driven via the HAL abstraction.
 
@@ -46,6 +46,11 @@ The car module SHALL expose all vehicle state exclusively through the `car_get_*
 ---
 
 ### Requirement: All Raise-required signals are decoded from MS-CAN
+The car module SHALL decode all signals listed below from the corresponding MS-CAN message IDs and expose them through the `car_get_*` API.
+
+#### Scenario: All required signals available after frame receipt
+- **WHEN** each MS-CAN frame in the table below is received
+- **THEN** the corresponding `car_get_*` function returns the decoded value within one main loop tick
 
 | Signal | `car_get_*` function | MS-CAN ID | Notes |
 |--------|----------------------|-----------|-------|

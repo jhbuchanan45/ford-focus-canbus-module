@@ -1,6 +1,6 @@
 # HAL Mocks Spec
 
-## Overview
+## Purpose
 
 Mock implementations of all HAL interfaces, used by the CTest unit test suite. Mocks replace production HAL `.c` files at link time via CMake; no production code is modified.
 

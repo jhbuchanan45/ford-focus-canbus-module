@@ -1,6 +1,6 @@
 # Unit Testing Spec
 
-## Overview
+## Purpose
 
 A CTest-based unit test suite runs entirely on the host build with no hardware, no `vcan0`, and no root privileges. Each concern has its own test executable. Mock HALs replace all production HAL files at link time.
 
