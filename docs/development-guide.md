@@ -38,9 +38,13 @@ Delta specs only get merged into `openspec/specs/` when you archive the change. 
 | Command | What it does |
 |---|---|
 | `/opsx:propose` | Draft all artifacts for a new change in one step |
+| `/opsx:ff` | Fast-forward through artifact creation |
 | `/opsx:explore` | Think through an idea without committing to a spec |
 | `/opsx:apply` | Implement the tasks in a change |
+| `/opsx:verify` | Verify implementation matches artifacts before archiving |
+| `/opsx:sync` | Sync delta specs to main specs without archiving |
 | `/opsx:archive` | Finalise a change, sync delta specs → main specs, move to archive |
+| `/opsx:bulk-archive` | Archive multiple completed changes at once |
 
 ---
 
@@ -53,7 +57,7 @@ A small feature goes straight from proposal to implementation without a separate
 ### 1. Propose
 
 ```
-/opsx:propose "add coolant fan relay signal on HS-CAN 0x420"
+/opsx:propose "add coolant temp decoding from MS-CAN 0x420"
 ```
 
 Claude will:
@@ -71,7 +75,7 @@ Review the artifacts. Edit them if anything is wrong — especially the bit posi
 /opsx:apply
 ```
 
-Claude reads your proposal, design, and tasks, then works through the checklist: updating `can_decoder.c`, adding the signal to the relevant struct, updating the UART JSON output, and ticking off each task as it goes. It stops and asks if anything is ambiguous.
+Claude reads your proposal, design, and tasks, then works through the checklist: updating `ford_focus_mk3_2015.c`, adding the signal to the car state struct, updating the output driver, and ticking off each task as it goes. It stops and asks if anything is ambiguous.
 
 ### 3. Archive
 
@@ -98,7 +102,7 @@ Large features benefit from an exploration phase before committing to a spec. Th
 ### 1. Explore First
 
 ```
-/opsx:explore "add MS-CAN support alongside HS-CAN"
+/opsx:explore "add front PDC sensor decoding from MS-CAN 0x5C0"
 ```
 
 Explore mode is a thinking session — no code is written, no spec is committed. Claude will:
@@ -112,7 +116,7 @@ When something crystallises, Claude will offer to capture it: *"That's a design 
 ### 2. Propose
 
 ```
-/opsx:propose "add ms-can support"
+/opsx:propose "add front pdc sensor decoding"
 ```
 
 Because you've already explored, the proposal phase is faster — Claude has context from the conversation. The artifacts will be more detailed and have fewer surprises:
