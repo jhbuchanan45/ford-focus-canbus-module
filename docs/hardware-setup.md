@@ -49,6 +49,9 @@ Before first power-on, measure the termination resistance across MS-CAN H/L **wi
 | ~60 Ω | Both 120 Ω stubs in loom | No resistor needed on canbox |
 | ~120 Ω | One stub in head unit (now removed) | **Fit 120 Ω across TJA1042 CANH/CANL pins** |
 | >200 Ω | Termination elsewhere / no termination | Add 120 Ω, flag for investigation |
+| Open / OL | No termination in loom at all | **Fit 120 Ω across TJA1042 CANH/CANL pins** |
+
+> **Measured result (this build):** No resistance between CAN H and CAN L — loom has no termination stub. **A 120 Ω resistor must be fitted across TJA1042 pins CANH (p7) and CANL (p6).** Add it directly on the breadboard between those two pins.
 
 ---
 
