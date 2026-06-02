@@ -13,7 +13,7 @@ Covers the physical build for connecting an STM32F103C8T6 (Blue Pill) to the For
 | 120 Ω resistor (0.25 W) | Only if bus termination test shows ~120 Ω (see §Bus Termination) |
 | 3.3 V LDO (e.g. AMS1117-3.3) | Only needed if ATOTO 8-pin power pin reads 12 V |
 | CP2102 / CH340 USB-UART adapter | For USART1 debug output (115200 baud) |
-| T-tap / insulation piercing connectors × 4 | Tap CAN H/L, ACC, GND from harness without cutting |
+| T-tap / insulation piercing connectors × 3 | Tap CAN H (pin 8), CAN L (pin 1), GND from FD09/FD60 connector |
 | Breadboard + jumper wires | 400pt breadboard recommended |
 
 ---
@@ -55,20 +55,34 @@ Before first power-on, measure the termination resistance across MS-CAN H/L **wi
 
 ---
 
+## FD09/FD60 20-pin Connector Pinout
+
+The RZ-FD09 harness uses a **20-pin FD09/FD60 connector** on the loom side. Only 10 pins are wired. Confirmed pin assignments:
+
+| Pin | Signal | Notes |
+|-----|--------|-------|
+| 1 | MS-CAN L | Confirmed |
+| 8 | MS-CAN H | Confirmed |
+| others | GND, ACC, Reverse, etc. | Identify by colour/multimeter |
+
+> The remaining pins are unconfirmed — identify GND with a multimeter (continuity to chassis) and ACC with a voltmeter (12 V with ignition on) before connecting.
+
+---
+
 ## Wiring Diagram — Option A: RZ-FD09 harness tap (recommended)
 
 Use this if you have the existing RZ-FD09 / quad-lock harness adapter already fitted.
-The Blue Pill **replaces** the RZ-FD09 box — tap 4 wires from the 10-pin harness
-connector, and connect UART output to the same ATOTO 8-pin socket the RZ-FD09 used.
+The Blue Pill **replaces** the RZ-FD09 box — tap wires from the 20-pin FD09/FD60
+harness connector, and connect UART output to the same ATOTO 8-pin socket the RZ-FD09 used.
 
 ```
- RZ-FD09 10-pin harness connector (loom side — T-tap, do not cut)
+ FD09/FD60 20-pin connector (loom side — T-tap, do not cut)
  ┌──────────────────────────────────┐
- │ Teal  (MS-CAN H) ────────────────┼──── CANH ──────────────────────┐
- │ White (MS-CAN L) ────────────────┼──── CANL ───────────────────┐  │
- │ Black (GND)      ────────────────┼────────────────────────┐    │  │
- │ Pink  (Reverse)  ─── (optional) ─┼──► Blue Pill GPIO      │    │  │
- │ (remaining 6 wires: leave alone) │                         │    │  │
+ │ Pin 8 (MS-CAN H) ────────────────┼──── CANH ──────────────────────┐
+ │ Pin 1 (MS-CAN L) ────────────────┼──── CANL ───────────────────┐  │
+ │ GND wire         ────────────────┼────────────────────────┐    │  │
+ │ Reverse wire ─── (optional) ─────┼──► Blue Pill GPIO      │    │  │
+ │ (remaining pins: leave alone)    │                         │    │  │
  └──────────────────────────────────┘                         │    │  │
                                          ┌───────────────────┼────┼──┼──────┐
                                          │  TJA1042          │    │  │      │
