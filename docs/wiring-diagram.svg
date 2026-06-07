@@ -1,0 +1,429 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 760" width="1000" height="760" font-family="monospace, sans-serif">
+
+  <!-- Background -->
+  <rect width="1000" height="760" fill="#1a1a2e" rx="8"/>
+
+  <!-- Title -->
+  <text x="500" y="32" text-anchor="middle" font-size="16" font-weight="bold" fill="#e0e0e0">Ford Focus Mk3 MS-CAN Decoder — Wiring Diagram (Option A: RZ-FD09 Harness Tap)</text>
+  <text x="500" y="50" text-anchor="middle" font-size="11" fill="#888">Power: ATOTO spare CarPlay USB → Blue Pill USB port  |  Only 3 wires from harness: CAN H / CAN L / GND</text>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- RZ-FD09 10-pin connector (left) -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <g id="rz-fd09">
+    <!-- Housing -->
+    <rect x="30" y="90" width="160" height="310" rx="6" fill="#2d2d2d" stroke="#888" stroke-width="1.5"/>
+    <text x="110" y="112" text-anchor="middle" font-size="12" font-weight="bold" fill="#e0e0e0">RZ-FD09</text>
+    <text x="110" y="128" text-anchor="middle" font-size="10" fill="#aaa">10-pin harness</text>
+    <text x="110" y="142" text-anchor="middle" font-size="10" fill="#aaa">connector (loom side)</text>
+
+    <!-- Pin 1 — Teal MS-CAN H -->
+    <circle cx="55" cy="175" r="7" fill="#009688" stroke="#ccc" stroke-width="1"/>
+    <text x="70" y="179" font-size="10" fill="#009688">Teal — MS-CAN H</text>
+
+    <!-- Pin 2 — White MS-CAN L -->
+    <circle cx="55" cy="205" r="7" fill="#f5f5f5" stroke="#ccc" stroke-width="1"/>
+    <text x="70" y="209" font-size="10" fill="#e0e0e0">White — MS-CAN L</text>
+
+    <!-- Pin 3 — Black GND -->
+    <circle cx="55" cy="235" r="7" fill="#444" stroke="#ccc" stroke-width="1"/>
+    <text x="70" y="239" font-size="10" fill="#ccc">Black — GND</text>
+
+    <!-- Pin 4 — Pink Reverse (optional) -->
+    <circle cx="55" cy="265" r="7" fill="#e91e8c" stroke="#ccc" stroke-width="1"/>
+    <text x="70" y="269" font-size="10" fill="#e91e8c">Pink — Reverse (opt)</text>
+
+    <!-- Pins 5-10 unused -->
+    <circle cx="55" cy="295" r="5" fill="#333" stroke="#666" stroke-width="1"/>
+    <circle cx="55" cy="320" r="5" fill="#333" stroke="#666" stroke-width="1"/>
+    <circle cx="55" cy="345" r="5" fill="#333" stroke="#666" stroke-width="1"/>
+    <circle cx="55" cy="370" r="5" fill="#333" stroke="#666" stroke-width="1"/>
+    <text x="70" y="299" font-size="9" fill="#555">· (unused)</text>
+    <text x="70" y="324" font-size="9" fill="#555">· (unused)</text>
+    <text x="70" y="349" font-size="9" fill="#555">· (unused)</text>
+    <text x="70" y="374" font-size="9" fill="#555">· (unused)</text>
+
+    <!-- T-tap label -->
+    <rect x="36" y="158" width="148" height="10" rx="2" fill="none" stroke="#555" stroke-width="1" stroke-dasharray="4,2"/>
+    <text x="186" y="166" font-size="9" fill="#777">T-tap</text>
+
+    <!-- Note -->
+    <text x="110" y="405" text-anchor="middle" font-size="9" fill="#888">Do not cut — T-tap only</text>
+  </g>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- TJA1042 CAN transceiver (centre-left) -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <g id="tja1042">
+    <!-- IC body -->
+    <rect x="310" y="120" width="130" height="240" rx="4" fill="#2a3a2a" stroke="#4caf50" stroke-width="1.5"/>
+    <!-- Notch -->
+    <path d="M 370 120 Q 375 110 380 120" fill="#1a1a2e" stroke="#4caf50" stroke-width="1"/>
+
+    <text x="375" y="145" text-anchor="middle" font-size="12" font-weight="bold" fill="#4caf50">TJA1042</text>
+    <text x="375" y="160" text-anchor="middle" font-size="10" fill="#81c784">CAN Transceiver</text>
+
+    <!-- Left pins (1-4): signals toward MCU -->
+    <!-- Pin 1 TXD -->
+    <line x1="310" y1="185" x2="290" y2="185" stroke="#4caf50" stroke-width="2"/>
+    <circle cx="290" cy="185" r="3" fill="#4caf50"/>
+    <text x="315" y="189" font-size="10" fill="#81c784">1·TXD</text>
+
+    <!-- Pin 2 GND -->
+    <line x1="310" y1="210" x2="290" y2="210" stroke="#607d8b" stroke-width="2"/>
+    <circle cx="290" cy="210" r="3" fill="#607d8b"/>
+    <text x="315" y="214" font-size="10" fill="#90a4ae">2·GND</text>
+
+    <!-- Pin 3 VCC -->
+    <line x1="310" y1="235" x2="290" y2="235" stroke="#ff9800" stroke-width="2"/>
+    <circle cx="290" cy="235" r="3" fill="#ff9800"/>
+    <text x="315" y="239" font-size="10" fill="#ffb74d">3·VCC</text>
+
+    <!-- Pin 4 RXD -->
+    <line x1="310" y1="260" x2="290" y2="260" stroke="#4caf50" stroke-width="2"/>
+    <circle cx="290" cy="260" r="3" fill="#4caf50"/>
+    <text x="315" y="264" font-size="10" fill="#81c784">4·RXD</text>
+
+    <!-- Right pins (5-8): CAN bus side -->
+    <!-- Pin 5 VREF -->
+    <line x1="440" y1="185" x2="460" y2="185" stroke="#555" stroke-width="1.5" stroke-dasharray="3,2"/>
+    <text x="395" y="189" font-size="10" fill="#555">5·VREF</text>
+    <text x="465" y="189" font-size="9" fill="#555">n/c</text>
+
+    <!-- Pin 6 CANL -->
+    <line x1="440" y1="210" x2="460" y2="210" stroke="#f5f5f5" stroke-width="2"/>
+    <circle cx="460" cy="210" r="3" fill="#f5f5f5"/>
+    <text x="395" y="214" font-size="10" fill="#e0e0e0">6·CANL</text>
+
+    <!-- Pin 7 CANH -->
+    <line x1="440" y1="235" x2="460" y2="235" stroke="#009688" stroke-width="2"/>
+    <circle cx="460" cy="235" r="3" fill="#009688"/>
+    <text x="395" y="239" font-size="10" fill="#4db6ac">7·CANH</text>
+
+    <!-- Pin 8 STB -->
+    <line x1="440" y1="260" x2="460" y2="260" stroke="#607d8b" stroke-width="2"/>
+    <circle cx="460" cy="260" r="3" fill="#607d8b"/>
+    <text x="395" y="264" font-size="10" fill="#90a4ae">8·STB</text>
+
+    <!-- Pin label area bottom -->
+    <text x="375" y="340" text-anchor="middle" font-size="9" fill="#555">SOIC-8</text>
+  </g>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- STM32F103C8T6 Blue Pill (centre-right) -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <g id="bluepill">
+    <!-- PCB outline -->
+    <rect x="560" y="80" width="190" height="380" rx="5" fill="#1a237e" stroke="#3f51b5" stroke-width="1.5"/>
+    <!-- USB connector at top -->
+    <rect x="620" y="65" width="50" height="20" rx="3" fill="#37474f" stroke="#90a4ae" stroke-width="1"/>
+    <text x="645" y="78" text-anchor="middle" font-size="9" fill="#90a4ae">USB</text>
+
+    <text x="655" y="106" text-anchor="middle" font-size="12" font-weight="bold" fill="#7986cb">Blue Pill</text>
+    <text x="655" y="121" text-anchor="middle" font-size="10" fill="#9fa8da">STM32F103C8T6</text>
+
+    <!-- LED -->
+    <circle cx="655" cy="148" r="6" fill="#f44336" opacity="0.8"/>
+    <text x="668" y="152" font-size="9" fill="#ef9a9a">PC13 LED</text>
+
+    <!-- Left-side pins (facing left) -->
+    <!-- PB8 CAN RX -->
+    <line x1="560" y1="200" x2="540" y2="200" stroke="#4caf50" stroke-width="2"/>
+    <circle cx="540" cy="200" r="3" fill="#4caf50"/>
+    <text x="565" y="204" font-size="10" fill="#81c784">PB8 (CAN1_RX)</text>
+
+    <!-- PB9 CAN TX -->
+    <line x1="560" y1="225" x2="540" y2="225" stroke="#4caf50" stroke-width="2"/>
+    <circle cx="540" cy="225" r="3" fill="#4caf50"/>
+    <text x="565" y="229" font-size="10" fill="#81c784">PB9 (CAN1_TX)</text>
+
+    <!-- 3V3 -->
+    <line x1="560" y1="255" x2="540" y2="255" stroke="#ff9800" stroke-width="2"/>
+    <circle cx="540" cy="255" r="3" fill="#ff9800"/>
+    <text x="565" y="259" font-size="10" fill="#ffb74d">3V3</text>
+
+    <!-- GND -->
+    <line x1="560" y1="280" x2="540" y2="280" stroke="#607d8b" stroke-width="2"/>
+    <circle cx="540" cy="280" r="3" fill="#607d8b"/>
+    <text x="565" y="284" font-size="10" fill="#90a4ae">GND</text>
+
+    <!-- Right-side pins (facing right) -->
+    <!-- PA2 USART2 TX -->
+    <line x1="750" y1="310" x2="770" y2="310" stroke="#ff7043" stroke-width="2"/>
+    <circle cx="770" cy="310" r="3" fill="#ff7043"/>
+    <text x="620" y="314" font-size="10" fill="#ff8a65">PA2 (USART2 TX)</text>
+
+    <!-- PA3 USART2 RX -->
+    <line x1="750" y1="335" x2="770" y2="335" stroke="#ff7043" stroke-width="2"/>
+    <circle cx="770" cy="335" r="3" fill="#ff7043"/>
+    <text x="620" y="339" font-size="10" fill="#ff8a65">PA3 (USART2 RX)</text>
+
+    <!-- PA9 USART1 TX debug -->
+    <line x1="750" y1="365" x2="770" y2="365" stroke="#9c27b0" stroke-width="1.5" stroke-dasharray="4,2"/>
+    <circle cx="770" cy="365" r="3" fill="#9c27b0"/>
+    <text x="620" y="369" font-size="10" fill="#ce93d8">PA9 (USART1 TX debug)</text>
+
+    <!-- PA10 USART1 RX debug -->
+    <line x1="750" y1="390" x2="770" y2="390" stroke="#9c27b0" stroke-width="1.5" stroke-dasharray="4,2"/>
+    <circle cx="770" cy="390" r="3" fill="#9c27b0"/>
+    <text x="620" y="394" font-size="10" fill="#ce93d8">PA10 (USART1 RX debug)</text>
+
+    <!-- GND right side -->
+    <line x1="750" y1="420" x2="770" y2="420" stroke="#607d8b" stroke-width="2"/>
+    <circle cx="770" cy="420" r="3" fill="#607d8b"/>
+    <text x="620" y="424" font-size="10" fill="#90a4ae">GND</text>
+
+    <!-- USB note -->
+    <text x="655" y="445" text-anchor="middle" font-size="9" fill="#5c6bc0">PA11/PA12 = USB CDC</text>
+    <text x="655" y="458" text-anchor="middle" font-size="9" fill="#5c6bc0">(Phase 1 JSON log)</text>
+  </g>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- ATOTO 8-pin CAN socket (right) -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <g id="atoto-can">
+    <rect x="790" y="265" width="175" height="130" rx="5" fill="#2d2d2d" stroke="#ff7043" stroke-width="1.5"/>
+    <text x="877" y="284" text-anchor="middle" font-size="11" font-weight="bold" fill="#ff7043">ATOTO 8-pin</text>
+    <text x="877" y="298" text-anchor="middle" font-size="10" fill="#ff8a65">CAN Box Socket</text>
+
+    <!-- UART RX (head unit receives) -->
+    <circle cx="810" cy="320" r="5" fill="#ff7043" stroke="#ccc" stroke-width="1"/>
+    <text x="822" y="324" font-size="10" fill="#ff8a65">UART-RX ← PA2 (TX)</text>
+
+    <!-- UART TX (head unit sends) -->
+    <circle cx="810" cy="345" r="5" fill="#ff7043" stroke="#ccc" stroke-width="1"/>
+    <text x="822" y="349" font-size="10" fill="#ff8a65">UART-TX → PA3 (RX)</text>
+
+    <!-- GND -->
+    <circle cx="810" cy="370" r="5" fill="#607d8b" stroke="#ccc" stroke-width="1"/>
+    <text x="822" y="374" font-size="10" fill="#90a4ae">GND</text>
+
+    <text x="877" y="390" text-anchor="middle" font-size="9" fill="#888">38400 baud 8N1</text>
+    <text x="877" y="402" text-anchor="middle" font-size="9" fill="#888">Raise VW PQ protocol</text>
+  </g>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- ATOTO USB (CarPlay USB port — power) -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <g id="atoto-usb">
+    <rect x="790" y="430" width="175" height="95" rx="5" fill="#2d2d2d" stroke="#ffeb3b" stroke-width="1.5"/>
+    <text x="877" y="448" text-anchor="middle" font-size="11" font-weight="bold" fill="#ffeb3b">ATOTO CarPlay USB</text>
+    <text x="877" y="462" text-anchor="middle" font-size="10" fill="#fff176">(spare port — 5 V)</text>
+
+    <circle cx="810" cy="485" r="5" fill="#ffeb3b" stroke="#ccc" stroke-width="1"/>
+    <text x="822" y="489" font-size="10" fill="#fff176">5 V VBUS</text>
+
+    <circle cx="810" cy="508" r="5" fill="#607d8b" stroke="#ccc" stroke-width="1"/>
+    <text x="822" y="512" font-size="10" fill="#90a4ae">GND</text>
+
+    <text x="877" y="523" text-anchor="middle" font-size="9" fill="#888">Phase 2: in-car power</text>
+  </g>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- CP2102 debug UART adapter (bottom-right) -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <g id="debug-uart">
+    <rect x="790" y="560" width="175" height="100" rx="5" fill="#1a1a2e" stroke="#9c27b0" stroke-width="1.5" stroke-dasharray="5,3"/>
+    <text x="877" y="578" text-anchor="middle" font-size="11" font-weight="bold" fill="#9c27b0">CP2102 / CH340</text>
+    <text x="877" y="592" text-anchor="middle" font-size="10" fill="#ce93d8">USB-UART (optional)</text>
+
+    <circle cx="810" cy="612" r="5" fill="#9c27b0" stroke="#ccc" stroke-width="1"/>
+    <text x="822" y="616" font-size="10" fill="#ce93d8">RX ← PA9 (TX)</text>
+
+    <circle cx="810" cy="635" r="5" fill="#9c27b0" stroke="#ccc" stroke-width="1"/>
+    <text x="822" y="639" font-size="10" fill="#ce93d8">TX → PA10 (RX)</text>
+
+    <text x="877" y="655" text-anchor="middle" font-size="9" fill="#888">115200 baud</text>
+  </g>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- WIRES — all orthogonal, routed around component boxes  -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+
+  <!--
+    Component bounding boxes (for routing reference):
+      RZ-FD09:   x=30..190,  y=90..400
+      TJA1042:   x=310..440, y=120..360
+      Blue Pill: x=560..750, y=80..460
+      ATOTO-CAN: x=790..965, y=265..395
+      ATOTO-USB: x=790..965, y=430..525
+      CP2102:    x=790..965, y=560..660
+      Notes:     x=30..290,  y=440..600
+      Legend:    x=30..290,  y=610..715
+    Wire corridors:
+      Top corridor:    y=60..75  (above all boxes except USB nub)
+      Mid corridor:    x=480..555 (gap between TJA1042 right and Blue Pill left)
+      Right corridor:  x=760..790 (gap between Blue Pill right and ATOTO boxes)
+      Bottom corridor: y=670..700 (below all boxes)
+  -->
+
+  <!-- == CAN H: RZ-FD09 pin1 (62,175) → TJA1042 CANH p7 (460,235) ==
+       Route: exit connector right, jog up to top corridor y=68,
+       run right to x=480 (clear of TJA1042 left edge x=310),
+       drop down to y=235, run right to TJA1042 CANH pin. -->
+  <polyline points="62,175 22,175 22,68 480,68 480,235 460,235"
+    fill="none" stroke="#009688" stroke-width="2.5"/>
+  <text x="140" y="63" font-size="9" fill="#4db6ac">CAN H</text>
+
+  <!-- == CAN L: RZ-FD09 pin2 (62,205) → TJA1042 CANL p6 (460,210) ==
+       Route: exit connector right at y=205, jog left to x=22 (outside box),
+       up to y=75 (just below CAN H), right to x=490, down to y=210, right to pin.
+       (Using x=490 to keep CAN L clearly separated from CAN H at x=480.) -->
+  <polyline points="62,205 22,205 22,75 490,75 490,210 460,210"
+    fill="none" stroke="#e0e0e0" stroke-width="2.5"/>
+  <text x="140" y="82" font-size="9" fill="#bdbdbd">CAN L</text>
+
+  <!-- == RXD→PB8: TJA1042 RXD p4 (290,260) → Blue Pill PB8 (540,200) ==
+       Route: exit left to x=285, down to y=280 (below TJA1042 bottom at y=360 — wait,
+       actually route via the mid corridor x=500..555):
+       exit p4 left to x=285, down to y=375 (below TJA1042 at y=360),
+       right to x=510, up to y=200, right to PB8 at x=540. -->
+  <polyline points="290,260 285,260 285,375 510,375 510,200 540,200"
+    fill="none" stroke="#4caf50" stroke-width="2"/>
+  <text x="512" y="193" font-size="9" fill="#81c784">RXD→PB8</text>
+
+  <!-- == PB9→TXD: Blue Pill PB9 (540,225) → TJA1042 TXD p1 (290,185) ==
+       Route: exit PB9 left to x=525, up to y=100 (top corridor, above TJA1042 at y=120),
+       left to x=295, down to y=185, right to p1 at x=290. -->
+  <polyline points="540,225 525,225 525,100 295,100 295,185 290,185"
+    fill="none" stroke="#4caf50" stroke-width="2"/>
+  <text x="380" y="96" font-size="9" fill="#81c784">PB9→TXD</text>
+
+  <!-- == VCC: TJA1042 VCC p3 (290,235) → Blue Pill 3V3 (540,255) ==
+       Route: exit p3 left to x=280, down to y=365 (below TJA1042),
+       right to x=520, up to y=255, right to 3V3 pin. -->
+  <polyline points="290,235 280,235 280,365 520,365 520,255 540,255"
+    fill="none" stroke="#ff9800" stroke-width="2"/>
+
+  <!-- == GND bus ==
+       All GND connections route down to a bus at y=680, clear of all component boxes.
+       RZ-FD09 GND pin (62,235) → bus
+       TJA1042 GND p2 (290,210) → bus
+       TJA1042 STB p8 (460,260) → bus (STB tied low)
+       Blue Pill GND left (540,280) → bus
+       Blue Pill GND right (770,420) → bus
+       ATOTO-CAN GND (810,370) → bus
+       ATOTO-USB GND (810,508) → bus
+  -->
+  <!-- RZ-FD09 GND → left edge → down to bus -->
+  <polyline points="62,235 18,235 18,680 960,680"
+    fill="none" stroke="#607d8b" stroke-width="2"/>
+  <!-- TJA1042 GND p2 drop to bus -->
+  <polyline points="290,210 240,210 240,680"
+    fill="none" stroke="#607d8b" stroke-width="2"/>
+  <!-- TJA1042 STB p8 drop to bus -->
+  <polyline points="460,260 470,260 470,680"
+    fill="none" stroke="#607d8b" stroke-width="1.5" stroke-dasharray="4,2"/>
+  <text x="473" y="275" font-size="8" fill="#78909c">STB→GND</text>
+  <!-- Blue Pill GND left drop to bus -->
+  <polyline points="540,280 505,280 505,680"
+    fill="none" stroke="#607d8b" stroke-width="2"/>
+  <!-- Blue Pill GND right drop to bus -->
+  <polyline points="770,420 780,420 780,680"
+    fill="none" stroke="#607d8b" stroke-width="2"/>
+  <!-- ATOTO-CAN GND drop to bus -->
+  <polyline points="810,370 800,370 800,680"
+    fill="none" stroke="#607d8b" stroke-width="1.5"/>
+  <!-- ATOTO-USB GND drop to bus -->
+  <polyline points="810,508 795,508 795,680"
+    fill="none" stroke="#607d8b" stroke-width="1.5"/>
+  <!-- GND bus label -->
+  <text x="400" y="695" text-anchor="middle" font-size="9" fill="#78909c">GND bus</text>
+
+  <!-- == PA2 TX → ATOTO 8-pin UART-RX: straight across at y=310 == -->
+  <polyline points="770,310 790,310"
+    fill="none" stroke="#ff7043" stroke-width="2"/>
+
+  <!-- == ATOTO 8-pin UART-TX → PA3 RX: straight across at y=345 == -->
+  <polyline points="790,345 770,345"
+    fill="none" stroke="#ff7043" stroke-width="2"/>
+
+  <!-- == ATOTO-CAN GND → Blue Pill GND right (already on bus) ==
+       A short visual tie-line from ATOTO-CAN GND to the right-corridor bus drop. -->
+
+  <!-- == ATOTO CarPlay USB 5V → Blue Pill USB ==
+       Route: from ATOTO USB top-left corner, up the right corridor at x=785,
+       continue up to y=58 (above Blue Pill USB nub at y=65),
+       left to x=645, down to Blue Pill USB at y=65. -->
+  <polyline points="810,485 785,485 785,58 645,58 645,65"
+    fill="none" stroke="#ffeb3b" stroke-width="2.5"/>
+  <text x="700" y="53" font-size="9" fill="#fff176">5V USB (Phase 2: in-car power)</text>
+  <text x="645" y="63" text-anchor="middle" font-size="9" fill="#fff176">5V</text>
+
+  <!-- == Debug UART PA9 (770,365) → CP2102 RX (810,612) ==
+       Route: right to x=782, down outside ATOTO-CAN (ends at y=395) and
+       ATOTO-USB (ends at y=525), then right at y=540 (gap between USB y=525 and CP2102 y=560),
+       right to x=810, down to y=612. -->
+  <polyline points="770,365 782,365 782,540 810,540 810,560"
+    fill="none" stroke="#9c27b0" stroke-width="1.5" stroke-dasharray="4,2"/>
+  <!-- short drop into CP2102 RX pin from top -->
+  <polyline points="810,560 810,612"
+    fill="none" stroke="#9c27b0" stroke-width="1.5" stroke-dasharray="4,2"/>
+
+  <!-- == Debug UART PA10 (770,390) → CP2102 TX (810,635) ==
+       Route: right to x=786, down to y=545 (gap, slightly offset from PA9 line),
+       right to x=820, down to y=635. -->
+  <polyline points="770,390 786,390 786,545 820,545 820,560 820,635"
+    fill="none" stroke="#9c27b0" stroke-width="1.5" stroke-dasharray="4,2"/>
+  <!-- short drop into CP2102 TX pin from top -->
+  <polyline points="820,560 820,635"
+    fill="none" stroke="#9c27b0" stroke-width="1.5" stroke-dasharray="4,2"/>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- 120Ω termination note -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <g id="termination">
+    <rect x="30" y="440" width="260" height="60" rx="4" fill="#1a1a2e" stroke="#ff9800" stroke-width="1" stroke-dasharray="4,2"/>
+    <text x="160" y="458" text-anchor="middle" font-size="10" font-weight="bold" fill="#ff9800">⚠ Bus Termination</text>
+    <text x="160" y="473" text-anchor="middle" font-size="9" fill="#ffb74d">Measure CANH–CANL with ignition off:</text>
+    <text x="160" y="486" text-anchor="middle" font-size="9" fill="#ffb74d">~60Ω = none needed  |  ~120Ω = fit 120Ω resistor</text>
+  </g>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- Protocol note -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <g id="protocol-note">
+    <rect x="30" y="515" width="260" height="75" rx="4" fill="#1a1a2e" stroke="#3f51b5" stroke-width="1"/>
+    <text x="160" y="533" text-anchor="middle" font-size="10" font-weight="bold" fill="#7986cb">ATOTO Settings</text>
+    <text x="160" y="548" text-anchor="middle" font-size="9" fill="#9fa8da">Settings → Factory → CAN Box:</text>
+    <text x="160" y="563" text-anchor="middle" font-size="9" fill="#9fa8da">Select  "Raise VW PQ"</text>
+    <text x="160" y="578" text-anchor="middle" font-size="9" fill="#9fa8da">MS-CAN: 125 kbps  |  UART: 38400 baud 8N1</text>
+    <text x="160" y="590" text-anchor="middle" font-size="9" fill="#9fa8da">CAN1 remapped: PB8 (RX) / PB9 (TX)</text>
+  </g>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- Legend -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <g id="legend">
+    <rect x="30" y="605" width="260" height="110" rx="4" fill="#111" stroke="#444" stroke-width="1"/>
+    <text x="160" y="622" text-anchor="middle" font-size="10" font-weight="bold" fill="#ccc">Legend</text>
+
+    <line x1="45" y1="636" x2="85" y2="636" stroke="#009688" stroke-width="2.5"/>
+    <text x="92" y="640" font-size="9" fill="#4db6ac">MS-CAN H (teal wire)</text>
+
+    <line x1="45" y1="652" x2="85" y2="652" stroke="#e0e0e0" stroke-width="2.5"/>
+    <text x="92" y="656" font-size="9" fill="#bdbdbd">MS-CAN L (white wire)</text>
+
+    <line x1="45" y1="668" x2="85" y2="668" stroke="#607d8b" stroke-width="2"/>
+    <text x="92" y="672" font-size="9" fill="#90a4ae">GND (black wire)</text>
+
+    <line x1="45" y1="684" x2="85" y2="684" stroke="#ff9800" stroke-width="2"/>
+    <text x="92" y="688" font-size="9" fill="#ffb74d">3.3 V supply</text>
+
+    <line x1="150" y1="636" x2="190" y2="636" stroke="#4caf50" stroke-width="2"/>
+    <text x="197" y="640" font-size="9" fill="#81c784">CAN peripheral</text>
+
+    <line x1="150" y1="652" x2="190" y2="652" stroke="#ff7043" stroke-width="2"/>
+    <text x="197" y="656" font-size="9" fill="#ff8a65">Raise UART</text>
+
+    <line x1="150" y1="668" x2="190" y2="668" stroke="#ffeb3b" stroke-width="2.5"/>
+    <text x="197" y="672" font-size="9" fill="#fff176">USB power (5 V)</text>
+
+    <line x1="150" y1="684" x2="190" y2="684" stroke="#9c27b0" stroke-width="1.5" stroke-dasharray="4,2"/>
+    <text x="197" y="688" font-size="9" fill="#ce93d8">Debug UART (optional)</text>
+
+    <text x="45" y="708" font-size="9" fill="#888">Phase 1: USB to laptop  |  Phase 2: USB to ATOTO</text>
+  </g>
+
+</svg>
