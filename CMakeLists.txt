@@ -8,10 +8,10 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 # Build options
 # ---------------------------------------------------------------------------
 set(CANMOD_TARGET "host"  CACHE STRING "Build target:  stm32f1 | host")
-set(CANMOD_OUTPUT "json"  CACHE STRING "Output driver: json    | raise")
+set(CANMOD_OUTPUT "json"  CACHE STRING "Output driver: json | raise | sniffer")
 
 set_property(CACHE CANMOD_TARGET PROPERTY STRINGS stm32f1 host)
-set_property(CACHE CANMOD_OUTPUT PROPERTY STRINGS json raise)
+set_property(CACHE CANMOD_OUTPUT PROPERTY STRINGS json raise sniffer)
 
 message(STATUS "CANMOD_TARGET = ${CANMOD_TARGET}")
 message(STATUS "CANMOD_OUTPUT = ${CANMOD_OUTPUT}")
@@ -35,9 +35,12 @@ if(CANMOD_OUTPUT STREQUAL "json")
 elseif(CANMOD_OUTPUT STREQUAL "raise")
     list(APPEND COMMON_SOURCES ${SRC}/output/raise.c)
     add_compile_definitions(CANMOD_OUTPUT_RAISE=1)
+elseif(CANMOD_OUTPUT STREQUAL "sniffer")
+    add_compile_definitions(CANMOD_OUTPUT_SNIFFER=1)
+    # sniffer uses its own source list and entry point — see stm32f1 target block
 else()
     message(FATAL_ERROR
-        "CANMOD_OUTPUT must be 'json' or 'raise' (got '${CANMOD_OUTPUT}').\n"
+        "CANMOD_OUTPUT must be 'json', 'raise', or 'sniffer' (got '${CANMOD_OUTPUT}').\n"
         "Example: cmake -DCANMOD_OUTPUT=json ..")
 endif()
 
@@ -73,38 +76,76 @@ if(CANMOD_TARGET STREQUAL "stm32f1")
         VERBATIM
     )
 
-    add_executable(canmod ${COMMON_SOURCES} ${HAL_SOURCES})
-    add_dependencies(canmod opencm3_build)
-
-    target_include_directories(canmod PRIVATE
-        ${SRC}
-        ${OPENCM3_DIR}/include
-    )
-    target_link_directories(canmod PRIVATE ${OPENCM3_DIR}/lib)
-    target_link_libraries(canmod PRIVATE opencm3_stm32f1)
-
-    set_target_properties(canmod PROPERTIES SUFFIX ".elf")
-
     # Linker script — use the bundled one for STM32F103x8 (64K flash / 20K RAM)
     set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/stm32f103.ld)
-    target_link_options(canmod PRIVATE
-        -T${LINKER_SCRIPT}
-        -Wl,-Map=${CMAKE_BINARY_DIR}/canmod.map
-        -Wl,--gc-sections
-        -nostartfiles
-    )
 
-    # Post-build: produce .bin for ST-Link / OpenOCD flashing
-    add_custom_command(TARGET canmod POST_BUILD
-        COMMAND ${CMAKE_OBJCOPY} -O binary
-            $<TARGET_FILE:canmod>
-            ${CMAKE_BINARY_DIR}/canmod.bin
-        COMMENT "Generating canmod.bin"
-    )
-    add_custom_command(TARGET canmod POST_BUILD
-        COMMAND ${CMAKE_SIZE} $<TARGET_FILE:canmod>
-        COMMENT "Firmware size"
-    )
+    if(CANMOD_OUTPUT STREQUAL "sniffer")
+        # ---- Sniffer target (Blue Pill 2 — ATOTO emulator / FD60 logger) ----
+        add_executable(canmod-sniffer
+            ${SRC}/sniffer_main.c
+            ${SRC}/output/raise_sniffer.c
+            ${HAL_SOURCES}
+        )
+        add_dependencies(canmod-sniffer opencm3_build)
+
+        target_include_directories(canmod-sniffer PRIVATE
+            ${SRC}
+            ${OPENCM3_DIR}/include
+        )
+        target_link_directories(canmod-sniffer PRIVATE ${OPENCM3_DIR}/lib)
+        target_link_libraries(canmod-sniffer PRIVATE opencm3_stm32f1)
+
+        set_target_properties(canmod-sniffer PROPERTIES SUFFIX ".elf")
+
+        target_link_options(canmod-sniffer PRIVATE
+            -T${LINKER_SCRIPT}
+            -Wl,-Map=${CMAKE_BINARY_DIR}/canmod-sniffer.map
+            -Wl,--gc-sections
+            -nostartfiles
+        )
+
+        add_custom_command(TARGET canmod-sniffer POST_BUILD
+            COMMAND ${CMAKE_OBJCOPY} -O binary
+                $<TARGET_FILE:canmod-sniffer>
+                ${CMAKE_BINARY_DIR}/canmod-sniffer.bin
+            COMMENT "Generating canmod-sniffer.bin"
+        )
+        add_custom_command(TARGET canmod-sniffer POST_BUILD
+            COMMAND ${CMAKE_SIZE} $<TARGET_FILE:canmod-sniffer>
+            COMMENT "Firmware size"
+        )
+    else()
+        # ---- Main firmware target (Blue Pill 1 — CAN decoder) ---------------
+        add_executable(canmod ${COMMON_SOURCES} ${HAL_SOURCES})
+        add_dependencies(canmod opencm3_build)
+
+        target_include_directories(canmod PRIVATE
+            ${SRC}
+            ${OPENCM3_DIR}/include
+        )
+        target_link_directories(canmod PRIVATE ${OPENCM3_DIR}/lib)
+        target_link_libraries(canmod PRIVATE opencm3_stm32f1)
+
+        set_target_properties(canmod PROPERTIES SUFFIX ".elf")
+
+        target_link_options(canmod PRIVATE
+            -T${LINKER_SCRIPT}
+            -Wl,-Map=${CMAKE_BINARY_DIR}/canmod.map
+            -Wl,--gc-sections
+            -nostartfiles
+        )
+
+        add_custom_command(TARGET canmod POST_BUILD
+            COMMAND ${CMAKE_OBJCOPY} -O binary
+                $<TARGET_FILE:canmod>
+                ${CMAKE_BINARY_DIR}/canmod.bin
+            COMMENT "Generating canmod.bin"
+        )
+        add_custom_command(TARGET canmod POST_BUILD
+            COMMAND ${CMAKE_SIZE} $<TARGET_FILE:canmod>
+            COMMENT "Firmware size"
+        )
+    endif()
 
 # ---------------------------------------------------------------------------
 # Host (x86/x86_64) target
